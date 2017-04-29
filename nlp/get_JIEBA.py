@@ -4,7 +4,7 @@ import jieba.posseg as pseg
 
 
 def get_jieba(string, new_word=""):
-    jieba.load_userdict("dict.txt")
+    jieba.load_userdict("nlp\dict.txt")
 
     # for wo in newWord:
     jieba.suggest_freq(new_word, True)
@@ -15,7 +15,7 @@ def get_jieba(string, new_word=""):
 
     words_frequency = {}
 
-    with open("1-10000.txt", encoding='utf8') as f:
+    with open("nlp\\1-10000.txt", encoding='utf8') as f:
         for line in f:
             (key, v1, v2) = line.split()
             words_frequency[v1] = key

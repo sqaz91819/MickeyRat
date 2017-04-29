@@ -55,7 +55,7 @@ def movie_url(start, end):
     return articles_url
 
 
-def article_inf(url):
+def article_info(url):
     resp = requests.get(url, cookies={'over18': '1'}, verify=True)
     if resp.status_code != 200:
         print('invalid url:', resp.url)
@@ -93,7 +93,7 @@ def article_inf(url):
     content = ' '.join(filtered)
     content = re.sub(r'(\s)+', ' ', content)
     return {"title": title, "content": content, "url": url}
-# end article_inf()
+# end article_info()
 
 
 def json_write(filename, file):
@@ -115,18 +115,18 @@ def download(start, end):
     urls = movie_url(start, end)
     print("url finished!")
     for url in urls:
-        dic[re.sub('\.html', '', url.split('/')[-1])] = article_inf(url)
+        dic[re.sub('\.html', '', url.split('/')[-1])] = article_info(url)
         print("{0}/{1} finished!".format(urls.index(url) + 1, len(urls)))
     json_write(str(start) + str(end) + ".txt", dic)
     return dic
 
-# test = article_inf("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html")
+# test = article_info("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html")
 # print(len(test["content"].split(" ")[2]))
 # print(test["content"])
 # print(__line_con__(test["content"]))
 
 
-# pprint.pprint(article_inf("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html"))
+# pprint.pprint(article_info("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html"))
 # pprint.pprint(download(5311, 5311))
 '''
 dtest = {}
