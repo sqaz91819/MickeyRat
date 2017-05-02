@@ -12,7 +12,7 @@ def nlp(film_name, query_num=10):
         print('nlp progress:', x.index(i) / len(x) * 100, '%')
         test = crawler.article_info(i)
         if test:
-            ans.append(get_JIEBA.get_jieba(crawler.__line_con__(test["content"]), film_name))
+            ans.append(get_JIEBA.get_jieba(test["content"], film_name))
 
     return ans
 
