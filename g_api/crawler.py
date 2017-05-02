@@ -92,7 +92,7 @@ def article_info(url):
     filtered = [x for x in filtered if article_id not in x]  # remove last line containing the url of the article
     content = ' '.join(filtered)
     content = re.sub(r'(\s)+', ' ', content)
-    return {"title": title, "content": content, "url": url}
+    return {"title": title, "content": __line_con__(content), "url": url}
 # end article_info()
 
 
@@ -120,16 +120,23 @@ def download(start, end):
     json_write(str(start) + str(end) + ".txt", dic)
     return dic
 
+
+# movie board search : off-line version
+def search(j_file, query):
+    target = {}
+    for article in j_file:
+        print(j_file[article]["title"])
+        print(query)
+        if j_file[article]["title"].find(query) != -1:
+            target.update({article: j_file[article]})
+    return target
+
 # test = article_info("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html")
 # print(len(test["content"].split(" ")[2]))
 # print(test["content"])
 # print(__line_con__(test["content"]))
 
-
 # pprint.pprint(article_info("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html"))
 # pprint.pprint(download(5311, 5311))
-'''
-dtest = {}
-dtest.update({"hello": 18})
-print(dtest)
-'''
+# test = download(5311, 5311)
+# pprint.pprint(search(test, "目擊者"))
