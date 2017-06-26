@@ -1,9 +1,15 @@
 import re
 import requests
+from calendar import month_abbr
+from datetime import datetime
+from time import sleep
 from bs4 import BeautifulSoup
 from six import u
 import pprint
 import json
+
+
+abbr_to_num = {name: num for num, name in enumerate(month_abbr) if num}
 
 
 def __get_web_page__(url):
@@ -23,7 +29,7 @@ def __get_urls__(page):
     for d in divs:
         # 取得文章連結
         if d.find('a'):  # 有超連結，表示文章存在，未被刪除
-            if "雷" not in d.find('a').string.split("]")[0]:
+            if not d.find('a').string:
                 continue
             href = d.find('a')['href']
             articles.append("https://www.ptt.cc" + href)
@@ -51,11 +57,15 @@ def movie_url(start, end):
         articles_url += __get_urls__(page)
         if start == end:
             break
+        else:
+            sleep(0.1)
         start += 1
+        print("URL : {0}/{1} finished!".format(start, end))
     return articles_url
 
 
 def article_info(url):
+    print(url)
     resp = requests.get(url, cookies={'over18': '1'}, verify=True)
     if resp.status_code != 200:
         print('invalid url:', resp.url)
@@ -65,9 +75,13 @@ def article_info(url):
     soup = BeautifulSoup(resp.text, "html.parser")
     main_content = soup.find(id="main-content")
     metas = main_content.select('div.article-metaline')
+    author = ''
     title = ''
+    date = ''
     if metas:
+        author = metas[0].select('span.article-meta-value')[0].string if metas[0].select('span.article-meta-value')[0] else author
         title = metas[1].select('span.article-meta-value')[0].string if metas[1].select('span.article-meta-value')[0] else title
+        date = metas[2].select('span.article-meta-value')[0].string if metas[2].select('span.article-meta-value')[0] else date
         # remove meta nodes
         for meta in metas:
             meta.extract()
@@ -92,13 +106,29 @@ def article_info(url):
     filtered = [x for x in filtered if article_id not in x]  # remove last line containing the url of the article
     content = ' '.join(filtered)
     content = re.sub(r'(\s)+', ' ', content)
-    return {"title": title, "content": __line_con__(content), "url": url}
+    label = re.sub('\[|]', ' ', title).split()[0]
+
+    # data process
+    date = date.split()
+    time = date[3].split(":")
+    month = abbr_to_num[date[1]]
+    date = datetime(int(date[-1]), month, int(date[2]), int(time[0]), int(time[1]), int(time[2])).isoformat()
+
+    dic = {
+        "_id": article_id,
+        "author": author,
+        "label": label,
+        "title": title,
+        "url": url,
+        "date_added": date,
+        "content": __line_con__(content)}
+    return dic
 # end article_info()
 
 
-def json_write(filename, file):
+def json_write(filename, data):
     with open(filename, "w", encoding='utf-8') as outfile:
-        json.dump(file, outfile, ensure_ascii=False)
+        json.dump(data, outfile, ensure_ascii=False)
 
 
 def json_read(filename):
@@ -107,28 +137,30 @@ def json_read(filename):
         return d
 
 
-def download(start, end):
+def download(start=1, end=1):
     # page start to end
     # get article and download to json file
     # {"article id": {"article content": content, "article title": title, ...}}
-    dic = {}
+    articles = []
     urls = movie_url(start, end)
-    print("url finished!")
     for url in urls:
-        dic[re.sub('\.html', '', url.split('/')[-1])] = article_info(url)
+        try:
+            articles.append(article_info(url))
+        except Exception:
+            continue
         print("{0}/{1} finished!".format(urls.index(url) + 1, len(urls)))
-    json_write(str(start) + str(end) + ".txt", dic)
-    return dic
+        sleep(0.2)
+    json_write(str(start) + str(end) + ".txt", articles)
 
 
 # movie board search : off-line version
 def search(j_file, query):
-    target = {}
+    target = []
     for article in j_file:
-        print(j_file[article]["title"])
+        print(article["title"])
         print(query)
-        if j_file[article]["title"].find(query) != -1:
-            target.update({article: j_file[article]})
+        if article["title"].find(query) != -1:
+            target.append(article)
     return target
 
 # test = article_info("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html")
@@ -136,7 +168,9 @@ def search(j_file, query):
 # print(test["content"])
 # print(__line_con__(test["content"]))
 
-# pprint.pprint(article_info("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html"))
+# pprint.pprint(article_info("https://www.ptt.cc/bbs/movie/M.1368724974.A.BEA.html"))
 # pprint.pprint(download(5311, 5311))
 # test = download(5311, 5311)
 # pprint.pprint(search(test, "目擊者"))
+# download(1, 5590)
+# pprint.pprint(json_read("11.txt"))
