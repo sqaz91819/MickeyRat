@@ -1,14 +1,35 @@
-import pymongo
-from .crawler import article_info
+from time import time
 from pymongo import MongoClient
-from pymongo import collection
+# from pymongo import collection
 
-art1 = article_info("https://www.ptt.cc/bbs/movie/M.1498371150.A.FDE.html")
-art2 = article_info("https://www.ptt.cc/bbs/movie/M.1498380389.A.5D6.html")
 
+def init():
+    client = MongoClient('localhost', 27017)
+    db = client.test
+    return db
+
+
+def insert_one(doc):
+    db = init()
+    result = db.articles.insert_one(doc)
+    print(result.inserted_id)
+
+
+def inset_many(docs):
+    db = init()
+    result = db.articles.insert_many([doc for doc in docs if doc is not None])
+    print(result.inserted_ids)
+
+
+def db_search(query):
+    start = time()
+    db = init()
+    docs = db.articles.find({'title': {'$regex': ".*" + query + ".*"}})
+    print("Query : " + query + " total : " + str(docs.count()))
+    print(str(time() - start) + "secs")
+    return docs
 # create database
 # collection.Collection(database, "namestring", create=True)
-client = MongoClient('localhost', 27017)
-db = client.test
-result = db.articles.insert_one(art1)
-print(result.inserted_id)
+# test = json_read("15590.txt")
+# inset_many(test)
+# db_search("聲之形")
