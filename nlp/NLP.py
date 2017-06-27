@@ -1,6 +1,6 @@
 from nlp import get_JIEBA
-from g_api import crawler
-from g_api import g_api
+from crawler_api import crawler
+from crawler_api import g_api
 
 
 def nlp(film_name, query_num=10):
