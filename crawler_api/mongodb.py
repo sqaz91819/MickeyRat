@@ -1,10 +1,11 @@
 from time import time
 from pymongo import MongoClient
 # from pymongo import collection
+from crawler_api import crawler
 
 
 def init():
-    client = MongoClient('localhost', 27017)
+    client = MongoClient('140.135.11.102', 80)
     db = client.test
     return db
 
@@ -29,7 +30,7 @@ def db_search(query):
     print(str(time() - start) + "secs")
     return docs
 # create database
-# collection.Collection(database, "namestring", create=True)
-# test = json_read("15590.txt")
+# collection.Collection(init(), "articles", create=True)
+# test = crawler.json_read("15590.txt")
 # inset_many(test)
-# db_search("聲之形")
+db_search("你的名字")
