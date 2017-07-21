@@ -1,11 +1,19 @@
 from time import time
+from os import path
 from pymongo import MongoClient
 # from pymongo import collection
 from crawler_api import crawler
 
 
+def read_path(filename):
+    with open(filename, 'r') as file:
+        path = file.read()
+    return path
+
+
 def init():
-    client = MongoClient('140.135.11.102', 80)
+    server_path = read_path(path.join('crawler_api', 'server_path.txt'))
+    client = MongoClient(server_path, 80)
     db = client.test
     return db
 
