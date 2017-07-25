@@ -1,6 +1,6 @@
 #encoding=utf-8
 import jieba
-import crawler
+from crawler_api import crawler
 import math
 import jieba.posseg as pseg
 

@@ -1,5 +1,5 @@
-import get_JIEBA
-import crawler
+from nlp import get_JIEBA
+from crawler_api import crawler
 import time
 
 
