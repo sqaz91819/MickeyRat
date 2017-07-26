@@ -145,7 +145,9 @@ def download(start=1, end=1):
     urls = movie_url(start, end)
     for url in urls:
         try:
-            articles.append(article_info(url))
+            article = article_info(url)
+            if article:
+                articles.append(article)
         except Exception:
             continue
         print("{0}/{1} finished!".format(urls.index(url) + 1, len(urls)))
