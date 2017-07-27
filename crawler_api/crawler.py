@@ -153,6 +153,7 @@ def download(start=1, end=1):
         print("{0}/{1} finished!".format(urls.index(url) + 1, len(urls)))
         sleep(0.2)
     json_write(str(start) + str(end) + ".txt", articles)
+    write_log(end)
 
 
 # movie board search : off-line version
@@ -165,14 +166,13 @@ def search(j_file, query):
             target.append(article)
     return target
 
-# test = article_info("https://www.ptt.cc/bbs/movie/M.1493212539.A.A9E.html")
-# print(len(test["content"].split(" ")[2]))
-# print(test["content"])
-# print(__line_con__(test["content"]))
 
-# pprint.pprint(article_info("https://www.ptt.cc/bbs/movie/M.1368724974.A.BEA.html"))
-# pprint.pprint(download(5311, 5311))
-# test = download(5311, 5311)
-# pprint.pprint(search(test, "目擊者"))
-# download(1, 5590)
-# pprint.pprint(json_read("11.txt"))
+def write_log(page):
+    with open("log.txt", "w", encoding='utf-8') as outfile:
+        outfile.write("Last download page : " + str(page))
+
+
+def read_log():
+    with open("log.txt", "r", encoding='utf-8') as outfile:
+        last = outfile.read().split()[4]
+    return last
