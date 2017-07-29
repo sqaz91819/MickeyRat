@@ -41,5 +41,13 @@ class Mongodb:
         print("Spent time : " + str(time() - start)[0:5] + " secs")
         return list(docs)
 
-    def close(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.client.close()
+        print("Database connection closed...")
+        if exc_type:
+            print("Error type : " + str(exc_type))
+            print("Error : " + str(exc_val))
+        return True
