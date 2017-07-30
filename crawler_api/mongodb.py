@@ -23,7 +23,7 @@ class Mongodb:
         result = self.db.articles.insert_one(doc)
         print(result.inserted_id)
 
-    def inset_many(self, docs):
+    def insert_many(self, docs):
         result = self.db.articles.insert_many([doc for doc in docs if doc is not None])
         print(result.inserted_ids)
 
@@ -40,6 +40,13 @@ class Mongodb:
         print("Total : " + str(docs.count()))
         print("Spent time : " + str(time() - start)[0:5] + " secs")
         return list(docs)
+
+    def update_one(self, _id, segments, pos):
+        result = self.db.articles.update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
+        print(result.matched_count)
+
+    def close(self):
+        self.client.close()
 
     def __enter__(self):
         return self
