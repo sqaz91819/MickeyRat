@@ -5,9 +5,8 @@ from datetime import datetime
 from time import sleep
 from bs4 import BeautifulSoup
 from six import u
-import pprint
 import json
-
+from typing import List, Dict, Union
 
 abbr_to_num = {name: num for num, name in enumerate(month_abbr) if num}
 
@@ -46,7 +45,7 @@ def __line_con__(content):
     return target
 
 
-def movie_url(start, end):
+def __movie_url__(start, end):
     # get ptt movie board index start to end
     # all articles url in this range
     # [url1,url2....]
@@ -64,7 +63,8 @@ def movie_url(start, end):
     return articles_url
 
 
-def article_info(url):
+def article_info(url: str) -> Union[Dict, None]:
+    # noinspection SpellCheckingInspection
     print(url)
     resp = requests.get(url, cookies={'over18': '1'}, verify=True)
     if resp.status_code != 200:
@@ -79,9 +79,12 @@ def article_info(url):
     title = ''
     date = ''
     if metas:
-        author = metas[0].select('span.article-meta-value')[0].string if metas[0].select('span.article-meta-value')[0] else author
-        title = metas[1].select('span.article-meta-value')[0].string if metas[1].select('span.article-meta-value')[0] else title
-        date = metas[2].select('span.article-meta-value')[0].string if metas[2].select('span.article-meta-value')[0] else date
+        author = metas[0].select('span.article-meta-value')[0].string\
+            if metas[0].select('span.article-meta-value')[0] else author
+        title = metas[1].select('span.article-meta-value')[0].string\
+            if metas[1].select('span.article-meta-value')[0] else title
+        date = metas[2].select('span.article-meta-value')[0].string\
+            if metas[2].select('span.article-meta-value')[0] else date
         # remove meta nodes
         for meta in metas:
             meta.extract()
@@ -106,7 +109,7 @@ def article_info(url):
     filtered = [x for x in filtered if article_id not in x]  # remove last line containing the url of the article
     content = ' '.join(filtered)
     content = re.sub(r'(\s)+', ' ', content)
-    label = re.sub('\[|]', ' ', title).split()[0]
+    label = re.sub('[\[\]]', ' ', title).split()[0]
 
     # data process
     date = date.split()
@@ -126,24 +129,25 @@ def article_info(url):
 # end article_info()
 
 
-def json_write(filename, data):
+def json_write(filename: str, data) -> None:
     with open(filename, "w", encoding='utf-8') as outfile:
         json.dump(data, outfile, ensure_ascii=False)
 
 
-def json_read(filename):
+def json_read(filename: str):
     with open(filename, encoding='utf-8') as json_data:
         d = json.load(json_data)
         return d
 
 
-def download(start=1, end=1):
+def download(start=1, end=1) -> None:
     # page start to end
     # get article and download to json file
     # {"article id": {"article content": content, "article title": title, ...}}
     articles = []
-    urls = movie_url(start, end)
+    urls = __movie_url__(start, end)
     for url in urls:
+        # noinspection PyBroadException
         try:
             article = article_info(url)
             if article:
@@ -157,7 +161,7 @@ def download(start=1, end=1):
 
 
 # movie board search : off-line version
-def search(j_file, query):
+def search(j_file, query: str) -> List[Dict]:
     target = []
     for article in j_file:
         print(article["title"])
@@ -167,12 +171,12 @@ def search(j_file, query):
     return target
 
 
-def write_log(page):
+def write_log(page: int) -> None:
     with open("log.txt", "w", encoding='utf-8') as outfile:
         outfile.write("Last download page : " + str(page))
 
 
-def read_log():
+def read_log() -> str:
     with open("log.txt", "r", encoding='utf-8') as outfile:
         last = outfile.read().split()[4]
     return last
