@@ -4,13 +4,12 @@ from crawler_api import crawler
 from crawler_api import mongodb
 
 
-
-#收文章
-def GOToDownload( start, end ):
+# 收文章
+def GOToDownload(start, end):
     tStart = time.time()  # 計時開始
     ans = []
 
-    #--------------------------------------------------------------
+    # --------------------------------------------------------------
 
     crawler.download(start, end)
     articles = crawler.json_read(str(start) + str(end) + ".txt")
@@ -41,7 +40,7 @@ def GOToDownload( start, end ):
         db.insert_many(ans)
 
 
-#更新舊有文章，加入分詞結果
+# 更新舊有文章，加入分詞結果
 def GOToUpdate():
     with mongodb.Mongodb() as db:
         articles = db.db_all()
@@ -54,36 +53,37 @@ def GOToUpdate():
             db.update_one(a["_id"], jieba_return['word'], jieba_return['flag'])
 
 
-#產生encode字典
+# 產生encode字典
 def dict_least_process(useTFIDF = True):
     if useTFIDF :
         codedict = get_JIEBA.tfidf_dict_least_process()
-    else :
+    else:
         codedict = get_JIEBA.Frequency_dict_least_process()
     return codedict
 
 
-#介面
+# 介面
 def InterFace(keyword):
     with mongodb.Mongodb() as db:
-        articles = db.db_search(keyword)
+        ans = db.db_search(keyword)
     
-    n=dict_least_process()
-    dict = crawler.json_read(n)
+    n = dict_least_process()
+    thedict = crawler.json_read(n)
 
-    for article in articles:
+    for article in ans:
         encode=[]
         for word in article["segments"]:
-            encode.append(dict[word])
+            encode.append(thedict[word])
         article["encoded"] = encode
 
-    return article
+    return ans
 
 
 def GO100():
     start = crawler.read_log() + 1
     end = start+100
     GOToDownload(start, end)
+
 
 def GO( num = 10 ):
     start = crawler.read_log() + 1
@@ -96,7 +96,7 @@ def TTTTest(start=1, end=1):
 
     # --------------------------------------------------------------
 
-    #crawler.download(start, end)
+    crawler.download(start, end)
     articles = crawler.json_read(str(start) + str(end) + ".txt")
 
     # --------------------------------------------------------------
@@ -133,4 +133,4 @@ def TTTTest(start=1, end=1):
 
 
 
-#TTTTest(1,1)
+# TTTTest(1,10)
