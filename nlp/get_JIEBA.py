@@ -81,11 +81,12 @@ def Get_jieba(string):
     tf_dict = crawler.json_read("tf_dict.txt")
     idf_dict = crawler.json_read("idf_dict.txt")
     temp = []
-    answer = {'word': [], 'flag': [] }
+    word = []
+    flag = []
 
     for one_word in pseg_words :
-        answer['word'].append(one_word.word)
-        answer['flag'].append(one_word.flag)
+        word.append(one_word.word)
+        flag.append(one_word.flag)
         if one_word.word in tf_dict:    # 計算出現次數 與 總辭數
             tf_dict[one_word.word] += 1
         else :
@@ -105,7 +106,7 @@ def Get_jieba(string):
     crawler.json_write("tf_dict.txt", tf_dict)
     crawler.json_write("idf_dict.txt", idf_dict)
 
-    return answer
+    return word, flag
 
 
 # Frequency_dict_least_process()

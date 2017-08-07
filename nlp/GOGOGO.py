@@ -19,7 +19,7 @@ def GOToDownload(start, end):
     get_JIEBA.tf_dict_first_process()
     get_JIEBA.idf_dict_first_process()
     for a in articles:
-        jieba_return = get_JIEBA.Get_jieba(a["content"])
+        jieba_word, jieba_flag = get_JIEBA.Get_jieba(a["content"])
         diction = {
             'id':a["_id"],
             'author':a["author"],
@@ -28,8 +28,8 @@ def GOToDownload(start, end):
             'url': a["url"],
             'date_added':a["date_added"],
             'text': a["content"],
-            'segments': jieba_return['word'],
-            'pos': jieba_return['flag']
+            'segments': jieba_word,
+            'pos': jieba_flag
         }
         ans.append(diction)
 
@@ -104,7 +104,7 @@ def TTTTest(start=1, end=1):
     get_JIEBA.tf_dict_first_process()
     get_JIEBA.idf_dict_first_process()
     for a in articles:
-        jieba_return = get_JIEBA.Get_jieba(a["content"])
+        jieba_word, jieba_flag = get_JIEBA.Get_jieba(a["content"])
         diction = {
             'id': a["_id"],
             'author': a["author"],
@@ -113,8 +113,8 @@ def TTTTest(start=1, end=1):
             'url': a["url"],
             'date_added': a["date_added"],
             'text': a["content"],
-            'segments': jieba_return['word'],
-            'pos': jieba_return['flag']
+            'segments': jieba_word,
+            'pos': jieba_flag
         }
         ans.append(diction)
         print(a["title"])
