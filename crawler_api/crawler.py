@@ -11,7 +11,7 @@ from typing import List, Dict, Union
 abbr_to_num = {name: num for num, name in enumerate(month_abbr) if num}
 
 
-def __get_web_page__(url):
+def __get_web_page(url):
     resp = requests.get(url, cookies={'over18': '1'}, verify=True)
     if resp.status_code != 200:
         print('Invalid url:', resp.url)
@@ -20,7 +20,7 @@ def __get_web_page__(url):
         return resp.text
 
 
-def __get_urls__(page):
+def __get_urls(page):
     # get one page articles urls
     articles = []
     soup = BeautifulSoup(page, "html.parser")
@@ -35,7 +35,7 @@ def __get_urls__(page):
     return articles
 
 
-def __line_con__(content):
+def __line_con(content):
     target = ""
     for lst in content.split(" "):
         if len(lst) >= 39:
@@ -45,15 +45,15 @@ def __line_con__(content):
     return target
 
 
-def __movie_url__(start, end):
+def __movie_url(start, end):
     # get ptt movie board index start to end
     # all articles url in this range
     # [url1,url2....]
     articles_url = []
     while True:
         url = 'https://www.ptt.cc/bbs/movie/index{0}.html'.format(start)
-        page = __get_web_page__(url)
-        articles_url += __get_urls__(page)
+        page = __get_web_page(url)
+        articles_url += __get_urls(page)
         if start == end:
             break
         else:
@@ -124,7 +124,7 @@ def article_info(url: str) -> Union[Dict, None]:
         "title": title,
         "url": url,
         "date_added": date,
-        "content": __line_con__(content)}
+        "content": __line_con(content)}
     return dic
 # end article_info()
 
@@ -145,7 +145,7 @@ def download(start=1, end=1) -> None:
     # get article and download to json file
     # {"article id": {"article content": content, "article title": title, ...}}
     articles = []
-    urls = __movie_url__(start, end)
+    urls = __movie_url(start, end)
     for url in urls:
         # noinspection PyBroadException
         try:

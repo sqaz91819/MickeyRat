@@ -9,8 +9,8 @@ def read_path(filename):
         server_path = file.read()
     return server_path
 
-article = DefaultDict
-articles = List[article]
+Article = DefaultDict
+Articles = List[Article]
 
 
 class Mongodb:
@@ -23,22 +23,22 @@ class Mongodb:
     def create_col(self, c_name: str) -> None:
         collection.Collection(self.db, c_name, create=True)
 
-    def insert_one(self, doc: article) -> None:
+    def insert_one(self, doc: Article) -> None:
         result = self.db.articles.insert_one(doc)
         print(result.inserted_id)
 
-    def insert_many(self, docs: articles) -> None:
+    def insert_many(self, docs: Articles) -> None:
         result = self.db.articles.insert_many([doc for doc in docs if doc is not None])
         print(result.inserted_ids)
 
-    def db_search(self, query: str) -> articles:
+    def db_search(self, query: str) -> Articles:
         start = time()
         docs = self.db.articles.find({'title': {'$regex': ".*" + query + ".*"}})
         print("Query : " + query + " total : " + str(docs.count()))
         print("Spent time : " + str(time() - start)[0:5] + " secs")
         return list(docs)
 
-    def db_all(self) -> articles:
+    def db_all(self) -> Articles:
         start = time()
         docs = self.db.articles.find({})
         print("Total : " + str(docs.count()))
