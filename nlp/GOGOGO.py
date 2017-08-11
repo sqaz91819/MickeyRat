@@ -66,7 +66,7 @@ def dict_least_process(useTFIDF = True):
 #介面
 def InterFace(keyword):
     with mongodb.Mongodb() as db:
-        articles = db.db_search(keyword)
+        articles = db.search_title(keyword)
     
     n=dict_least_process()
     dict = crawler.json_read(n)
