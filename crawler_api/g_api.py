@@ -17,10 +17,10 @@ def read_key(filename):
 def g_api(m_name, q_count):
     url_list = []
     total = 0
-    developer_key = read_key(path.join('g_api', 'developer_key.txt'))
+    developer_key = read_key(path.join('crawler_api', 'developer_key.txt'))
     service = build("customsearch", "v1",
                     developerKey=developer_key)
-    cx = read_key(path.join('g_api', 'cx.txt'))
+    cx = read_key(path.join('crawler_api', 'cx.txt'))
     for i in range(1, q_count):
         res = service.cse().list(
             q=m_name,
