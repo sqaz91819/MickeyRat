@@ -36,8 +36,8 @@ def Frequency_dict_least_process():
 
 # 計算tfidf
 def tfidf_dict_least_process():
-    tf_dict = crawler.json_read("tf_dict.txt")
-    idf_dict = crawler.json_read("idf_dict.txt")
+    tf_dict = crawler.json_read(os.path.join('nlp', "tf_dict.txt"))
+    idf_dict = crawler.json_read(os.path.join('nlp', "idf_dict.txt"))
 
     for i in idf_dict:
         if i != "THE總共" :

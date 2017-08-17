@@ -64,19 +64,20 @@ def dict_least_process(useTFIDF = True):
 
 # 介面
 def InterFace(keyword):
+    articles = []
     with mongodb.Mongodb() as db:
-        articles = db.search_title(keyword)
+        articles = db.search_title('articles', keyword)
     
     n = dict_least_process()
     thedict = crawler.json_read(n)
 
-    for article in ans:
+    for article in articles:
         encode=[]
         for word in article["segments"]:
             encode.append(thedict[word])
         article["encoded"] = encode
 
-    return ans
+    return articles
 
 
 def GO100():

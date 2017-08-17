@@ -16,7 +16,7 @@ Articles = List[Article]
 
 class Mongodb:
     def __init__(self):
-        self.server_path = read_path(path.join('D:/GitHub/MickeyRat',
+        self.server_path = read_path(path.join('crawler_api',
                                                'server_path.txt'))
         self.client = MongoClient(self.server_path, 80)
         self.db = self.client.test
