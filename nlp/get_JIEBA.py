@@ -9,7 +9,7 @@ import operator
 
 
 # 產生"tf_dict.txt"
-def tf_dict_first_process():
+def tf_dict_first_process()->None:
     with mongodb.Mongodb() as db:
         d = db.search_any("record", "the標題", "tf_dict")[0]
         if not d:
@@ -20,7 +20,7 @@ def tf_dict_first_process():
 
 
 # 產生"idf_dict.txt"
-def idf_dict_first_process():
+def idf_dict_first_process()->None:
     with mongodb.Mongodb() as db:
         d = db.search_any("record", "the標題", "idf_dict")[0]
         if not d:
@@ -31,7 +31,7 @@ def idf_dict_first_process():
 
 
 # 計算tf_idf
-def tf_idf_dict_least_process():
+def tf_idf_dict_least_process()->str:
     tf_dict = crawler.json_read(os.path.join('nlp', "tf_dict.txt"))
     idf_dict = crawler.json_read(os.path.join('nlp', "idf_dict.txt"))
 
@@ -77,7 +77,7 @@ def tf_idf_dict_least_process():
 
 
 # 結疤分詞，string 為一篇文章內容
-def get_jie_ba(string):
+def get_jie_ba(string: str)->dict:
 
     jieba.load_userdict("dict.txt")        # 一般辭典
     jieba.load_userdict("movie_list.txt")  # 電影辭典
