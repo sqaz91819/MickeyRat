@@ -4,39 +4,43 @@ from crawler_api import mongodb
 import jieba
 import jieba.posseg as pseg
 import math
-import os
+# import os
 import operator
 
 
 # 產生"tf_dict.txt"
 def tf_dict_first_process()->None:
     with mongodb.Mongodb() as db:
-        d = db.search_any("record", "the標題", "tf_dict")[0]
+        d = db.search_any("record", "the標題", "tf_dict")
         if not d:
             c = {"THE總共": 0, "the標題": "tf_dict"}
             crawler.json_write("tf_dict.txt", c)
         else:
-            crawler.json_write("tf_dict.txt", d)
+            del d[0]['_id']
+            crawler.json_write("tf_dict.txt", d[0])
 
 
 # 產生"idf_dict.txt"
 def idf_dict_first_process()->None:
     with mongodb.Mongodb() as db:
-        d = db.search_any("record", "the標題", "idf_dict")[0]
+        d = db.search_any("record", "the標題", "idf_dict")
         if not d:
             c = {"THE總共": 0, "the標題": "idf_dict"}
             crawler.json_write("idf_dict.txt", c)
         else:
-            crawler.json_write("idf_dict.txt", d)
+            del d[0]['_id']
+            crawler.json_write("idf_dict.txt", d[0])
 
 
 # 計算tf_idf
 def tf_idf_dict_least_process()->str:
-    tf_dict = crawler.json_read(os.path.join('nlp', "tf_dict.txt"))
-    idf_dict = crawler.json_read(os.path.join('nlp', "idf_dict.txt"))
+    tf_dict = crawler.json_read("tf_dict.txt")
+    idf_dict = crawler.json_read("idf_dict.txt")
 
     with mongodb.Mongodb() as db:
         jie_ba_articles_len = len(db.db_all("jie_ba_Articles"))
+        db.db["record"].remove({"the標題": "tf_dict"})
+        db.db["record"].remove({"the標題": "idf_dict"})
         db.insert_one("record", tf_dict)     # !!!!!!!!!!需更新的function
         db.insert_one("record", idf_dict)    # !!!!!!!!!!
 
@@ -91,21 +95,25 @@ def get_jie_ba(string: str)->dict:
     flag = []
 
     for one_word in pseg_words:
-        word.append(one_word.word)
+        if '.' in one_word.word:
+            changed_word = one_word.word.replace('.', '*')
+        else:
+            changed_word = one_word.word
+        word.append(changed_word)
         flag.append(one_word.flag)
-        if one_word.word in tf_dict:    # 計算出現次數 與 總辭數
-            tf_dict[one_word.word] += 1
+        if changed_word in tf_dict:    # 計算出現次數 與 總辭數
+            tf_dict[changed_word] += 1
         else:
-            tf_dict[one_word.word] = 1
+            tf_dict[changed_word] = 1
         tf_dict["THE總共"] += 1
-        if one_word.word not in temp:  # 計算出現文章數
-            temp.append(one_word.word)
+        if changed_word not in temp:  # 計算出現文章數
+            temp.append(changed_word)
 
-    for word in temp:
-        if word in idf_dict:
-            idf_dict[word] += 1
+    for w in temp:
+        if w in idf_dict:
+            idf_dict[w] += 1
         else:
-            idf_dict[word] = 1
+            idf_dict[w] = 1
 
     idf_dict["THE總共"] += 1
 
@@ -117,8 +125,21 @@ def get_jie_ba(string: str)->dict:
     return ans
 
 
+# 上傳tf_dict and idf_dict
+def up_dict()->None:
+    tf_dict = crawler.json_read("tf_dict.txt")
+    idf_dict = crawler.json_read("idf_dict.txt")
+
+    with mongodb.Mongodb() as db:
+        db.db["record"].remove({"the標題": "tf_dict"})
+        db.db["record"].remove({"the標題": "idf_dict"})
+        db.insert_one("record", tf_dict)     # !!!!!!!!!!需更新的function
+        db.insert_one("record", idf_dict)    # !!!!!!!!!!
+
 # Frequency_dict_least_process()
 # tf_idf_dict_least_process()
+
+# up_dict()
 '''
 tf_dict_first_process()
 idf_dict_first_process()
