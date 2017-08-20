@@ -2,6 +2,7 @@
 from nlp import get_JIEBA
 from crawler_api import crawler
 from crawler_api import mongodb
+from os import path
 
 
 def go_go_go(num: int)-> None:
@@ -65,7 +66,7 @@ def interface(search_key: str) -> list:
             article["encoded"] = encode
             print(article["title"])
 
-    return articles_list
+        return articles_list
 
 '''
 with mongodb.Mongodb() as db:
