@@ -29,9 +29,6 @@ def go_go_go(num: int)-> None:
 
 
 def interface(search_key: str) -> list:
-
-    with mongodb.Mongodb() as db:
-
         original_db_data = db.db_all("articles")
         jie_ba_db_data = db.db_all("jie_ba_Articles")
 

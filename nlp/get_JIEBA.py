@@ -21,22 +21,6 @@ def tf_dict_first_process()->None:
 
 
 # 產生"idf_dict.txt"
-def idf_dict_first_process()->None:
-    with mongodb.Mongodb() as db:
-        d = db.search_any("record", "the標題", "idf_dict")
-        if not d:
-            c = {"THE總共": 0, "the標題": "idf_dict"}
-            crawler.json_write("idf_dict.txt", c)
-        else:
-            del d[0]['_id']
-            crawler.json_write("idf_dict.txt", d[0])
-
-
-# 計算tf_idf
-def tf_idf_dict_least_process()->str:
-    tf_dict = crawler.json_read("tf_dict.txt")
-    idf_dict = crawler.json_read("idf_dict.txt")
-
     with mongodb.Mongodb() as db:
         jie_ba_articles_len = len(db.db_all("jie_ba_Articles"))
         db.db["record"].remove({"the標題": "tf_dict"})
