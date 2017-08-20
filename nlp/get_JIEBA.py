@@ -4,7 +4,7 @@ from crawler_api import mongodb
 import jieba
 import jieba.posseg as pseg
 import math
-# import os
+from os import path
 import operator
 
 
@@ -83,8 +83,8 @@ def tf_idf_dict_least_process()->str:
 # 結疤分詞，string 為一篇文章內容
 def get_jie_ba(string: str)->dict:
 
-    jieba.load_userdict("dict.txt")        # 一般辭典
-    jieba.load_userdict("movie_list.txt")  # 電影辭典
+    jieba.load_userdict(path.join('nlp', 'dict.txt'))        # 一般辭典
+    jieba.load_userdict(path.join('nlp', 'movie_list.txt'))  # 電影辭典
 
     pseg_words = pseg.cut(string)
 
