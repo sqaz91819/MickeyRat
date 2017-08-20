@@ -1,80 +1,90 @@
 # encoding=utf-8
 from crawler_api import crawler
+from crawler_api import mongodb
 import jieba
 import jieba.posseg as pseg
-import time
 import math
-import os
+from os import path
 import operator
 
 
 # 產生"tf_dict.txt"
-def tf_dict_first_process():
-    if not os.path.isfile('tf_dict.txt'):
-        d = {"THE總共": 0}
-        crawler.json_write("tf_dict.txt", d)
+def tf_dict_first_process()->None:
+    with mongodb.Mongodb() as db:
+        d = db.search_any("record", "the標題", "tf_dict")
+        if not d:
+            c = {"THE總共": 0, "the標題": "tf_dict"}
+            crawler.json_write("tf_dict.txt", c)
+        else:
+            del d[0]['_id']
+            crawler.json_write("tf_dict.txt", d[0])
 
 
 # 產生"idf_dict.txt"
-def idf_dict_first_process():
-    if not os.path.isfile('idf_dict.txt'):
-        d = {"THE總共": 0}
-        crawler.json_write("idf_dict.txt", d)
+def idf_dict_first_process()->None:
+    with mongodb.Mongodb() as db:
+        d = db.search_any("record", "the標題", "idf_dict")
+        if not d:
+            c = {"THE總共": 0, "the標題": "idf_dict"}
+            crawler.json_write("idf_dict.txt", c)
+        else:
+            del d[0]['_id']
+            crawler.json_write("idf_dict.txt", d[0])
 
 
-# 將"tf_dict.txt"重新編號，避免數字重複
-def Frequency_dict_least_process():
-    thedict = crawler.json_read("tf_dict.txt")
-    sorted_dict = sorted(thedict, key=thedict.get)
-    i = 1
-    for w in sorted_dict:
-        thedict[w] = i
-        i += 1
-    crawler.json_write(time.strftime("%Y_%d_%m_")+"frequency_dict.txt", thedict)
-    return str(time.strftime("%Y_%d_%m_")+"frequency_dict.txt")
+# 計算tf_idf
+def tf_idf_dict_least_process()->str:
+    tf_dict = crawler.json_read("tf_dict.txt")
+    idf_dict = crawler.json_read("idf_dict.txt")
 
-
-# 計算tfidf
-def tfidf_dict_least_process():
-    tf_dict = crawler.json_read(os.path.join('nlp', "tf_dict.txt"))
-    idf_dict = crawler.json_read(os.path.join('nlp', "idf_dict.txt"))
+    with mongodb.Mongodb() as db:
+        jie_ba_articles_len = len(db.db_all("jie_ba_Articles"))
+        db.db["record"].remove({"the標題": "tf_dict"})
+        db.db["record"].remove({"the標題": "idf_dict"})
+        db.insert_one("record", tf_dict)     # !!!!!!!!!!需更新的function
+        db.insert_one("record", idf_dict)    # !!!!!!!!!!
 
     for i in idf_dict:
-        if i != "THE總共" :
+        if i != "THE總共" and i != "the標題":
             idf_dict[i] = 1 - (idf_dict[i] / (idf_dict["THE總共"] + 1))
             # idf_dict[i] = math.log10(idf_dict["THE總共"]+1 / idf_dict[i])
 
-    tfidf_dict = {}
+    tf_idf_dict = {}
 
     for i in tf_dict:
-        if i != "THE總共":
-            # tfidf_dict[i] = math.log10(tf_dict[i] * idf_dict[i])
-            tfidf_dict[i] = math.log10(tf_dict[i]) * idf_dict[i]
+        if i != "THE總共" and i != "the標題":
+            # tf_idf_dict[i] = math.log10(tf_dict[i] * idf_dict[i])
+            tf_idf_dict[i] = math.log10(tf_dict[i]) * idf_dict[i]
 
     tf_list = sorted(tf_dict.items(), key=operator.itemgetter(1), reverse=True)
     idf_list = sorted(idf_dict.items(), key=operator.itemgetter(1), reverse=False)
-    tfidf_list = sorted(tfidf_dict.items(), key=operator.itemgetter(1), reverse=True)
+    tf_idf_list = sorted(tf_idf_dict.items(), key=operator.itemgetter(1), reverse=True)
 
-    crawler.json_write(time.strftime("%Y_%m_%d_") + "tf_list.txt", tf_list)
-    crawler.json_write(time.strftime("%Y_%m_%d_") + "idf_list.txt", idf_list)
-    crawler.json_write(time.strftime("%Y_%m_%d_")+"original_tfidf_list.txt", tfidf_list)
+    crawler.json_write("tf_list_to" + str(jie_ba_articles_len) + ".txt", tf_list)
+    crawler.json_write("idf_list_to" + str(jie_ba_articles_len) + ".txt", idf_list)
+    crawler.json_write("tf_idf_list_to" + str(jie_ba_articles_len) + ".txt", tf_idf_list)
 
     x = 1
-    for key, value in tfidf_list:
+    for key, value in tf_idf_list:
         if key != "THE總共":
-            tfidf_dict[key] = x
+            tf_idf_dict[key] = x
             x += 1
 
-    crawler.json_write(time.strftime("%Y_%m_%d_") + "tfidf_dict.txt", tfidf_dict)
+    crawler.json_write("tf_idf_dict_to" + str(jie_ba_articles_len) + ".txt", tf_idf_dict)
 
-    return str(time.strftime("%Y_%m_%d_") + "tfidf_dict.txt")
+    tf_idf_dict["the標題"] = "tf_idf_dict_to" + str(jie_ba_articles_len)
+
+    with mongodb.Mongodb() as db:
+        db.insert_one("record", tf_idf_dict)
+
+    return str("tf_idf_dict_to" + str(jie_ba_articles_len) + ".txt")
 
 
 # 結疤分詞，string 為一篇文章內容
-def Get_jieba(string):
+def get_jie_ba(string: str)->dict:
 
-    jieba.load_userdict("dict.txt") # 一般辭典
-    jieba.load_userdict("movie_list.txt") # 電影辭典
+    jieba.load_userdict(path.join('nlp', 'dict.txt'))        # 一般辭典
+    jieba.load_userdict(path.join('nlp', 'movie_list.txt'))  # 電影辭典
 
     pseg_words = pseg.cut(string)
 
@@ -84,37 +94,55 @@ def Get_jieba(string):
     word = []
     flag = []
 
-    for one_word in pseg_words :
-        word.append(one_word.word)
-        flag.append(one_word.flag)
-        if one_word.word in tf_dict:    # 計算出現次數 與 總辭數
-            tf_dict[one_word.word] += 1
-        else :
-            tf_dict[one_word.word] = 1
-        tf_dict["THE總共"] += 1
-        if one_word.word not in temp:  # 計算出現文章數
-            temp.append(one_word.word)
-
-    for word in temp:
-        if word in idf_dict:
-            idf_dict[word] += 1
+    for one_word in pseg_words:
+        if '.' in one_word.word:
+            changed_word = one_word.word.replace('.', '*')
         else:
-            idf_dict[word] = 1
+            changed_word = one_word.word
+        word.append(changed_word)
+        flag.append(one_word.flag)
+        if changed_word in tf_dict:    # 計算出現次數 與 總辭數
+            tf_dict[changed_word] += 1
+        else:
+            tf_dict[changed_word] = 1
+        tf_dict["THE總共"] += 1
+        if changed_word not in temp:  # 計算出現文章數
+            temp.append(changed_word)
+
+    for w in temp:
+        if w in idf_dict:
+            idf_dict[w] += 1
+        else:
+            idf_dict[w] = 1
 
     idf_dict["THE總共"] += 1
 
     crawler.json_write("tf_dict.txt", tf_dict)
     crawler.json_write("idf_dict.txt", idf_dict)
 
-    return word, flag
+    ans = {"segments": word, "pos": flag}
 
+    return ans
+
+
+# 上傳tf_dict and idf_dict
+def up_dict()->None:
+    tf_dict = crawler.json_read("tf_dict.txt")
+    idf_dict = crawler.json_read("idf_dict.txt")
+
+    with mongodb.Mongodb() as db:
+        db.db["record"].remove({"the標題": "tf_dict"})
+        db.db["record"].remove({"the標題": "idf_dict"})
+        db.insert_one("record", tf_dict)     # !!!!!!!!!!需更新的function
+        db.insert_one("record", idf_dict)    # !!!!!!!!!!
 
 # Frequency_dict_least_process()
-# tfidf_dict_least_process()
+# tf_idf_dict_least_process()
+
+# up_dict()
 '''
 tf_dict_first_process()
 idf_dict_first_process()
 x= Get_jieba("還有開大卡車送貨，偶而回家的爸爸住在一個小小的公寓裡頭，麥諾利多是個成績平平的平凡小孩，他的媽媽是典型的望子成龍型家長")
 print(x)
 '''
-
