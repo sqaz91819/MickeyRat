@@ -162,6 +162,10 @@ def fix_least() -> None:
         jie_ba_return = get_jie_ba(original_db_data[len(jie_ba_db_data)-1]["content"])
         jie_ba_return["title"] = original_db_data[len(jie_ba_db_data)-1]["title"]
         db.insert_one("jie_ba_Articles", jie_ba_return)
+        db.db["record"].remove({"the標題": "tf_dict"})
+        db.db["record"].remove({"the標題": "idf_dict"})
+        db.insert_one("record", tf_dict)  # !!!!!!!!!!需更新的function
+        db.insert_one("record", idf_dict)  # !!!!!!!!!!
 
 
 # Frequency_dict_least_process()
