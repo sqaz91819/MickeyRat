@@ -1,6 +1,6 @@
 from time import time
 from os import path
-from typing import List, DefaultDict, Union
+from typing import List, DefaultDict
 from pymongo import MongoClient, collection
 from collections import defaultdict
 
@@ -75,6 +75,10 @@ class Mongodb:
     def update_one(self, col_name: str, _id: str, segments, pos) -> None:
         result = self.db[col_name].update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
         print(result.matched_count)
+
+    def delete_one(self, col_name: str, _id: str) -> None:
+        result = self.db[col_name].delete_one({'_id': _id})
+        print("Deleted " + result)
 
     def close(self) -> None:
         self.client.close()
