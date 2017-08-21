@@ -136,6 +136,34 @@ def up_dict()->None:
         db.insert_one("record", tf_dict)     # !!!!!!!!!!需更新的function
         db.insert_one("record", idf_dict)    # !!!!!!!!!!
 
+
+# update
+def fix_least() -> None:
+    tf_dict = crawler.json_read("tf_dict.txt")
+    idf_dict = crawler.json_read("idf_dict.txt")
+
+    with mongodb.Mongodb() as db:
+
+        original_db_data = db.db_all("articles")
+        jie_ba_db_data = db.db_all("jie_ba_Articles")
+
+        jie_ba_list = jie_ba_db_data[len(jie_ba_db_data)-1]["segments"]
+        idf_temp = []
+
+        for w in jie_ba_list:
+            tf_dict[w] -= 1
+            tf_dict["THE總共"] -= 1
+            if w not in idf_temp:  # 計算出現文章數
+                idf_temp.append(w)
+
+        for i in idf_temp:
+            idf_dict[i] -= 1
+
+        jie_ba_return = get_jie_ba(original_db_data[len(jie_ba_db_data)-1]["content"])
+        jie_ba_return["title"] = original_db_data[len(jie_ba_db_data)-1]["title"]
+        db.insert_one("jie_ba_Articles", jie_ba_return)
+
+
 # Frequency_dict_least_process()
 # tf_idf_dict_least_process()
 

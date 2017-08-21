@@ -43,6 +43,7 @@ def interface(search_key: str) -> list:
                 jie_ba_return = get_JIEBA.get_jie_ba(original_db_data[i]["content"])
                 jie_ba_return["title"] = original_db_data[i]["title"]
                 db.insert_one("jie_ba_Articles", jie_ba_return)
+                get_JIEBA.up_dict()
                 print("{0}/{1} finished!".format(i, len(original_db_data)))
             tf_idf_dict_name = get_JIEBA.tf_idf_dict_least_process()
             tf_idf_dict = crawler.json_read(tf_idf_dict_name)
@@ -67,6 +68,10 @@ def interface(search_key: str) -> list:
             print(article["title"])
 
         return articles_list
+
+
+
+
 
 '''
 with mongodb.Mongodb() as db:
