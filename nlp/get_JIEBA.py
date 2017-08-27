@@ -33,16 +33,34 @@ def idf_dict_first_process()->None:
 
 
 # 計算tf_idf
-def tf_idf_dict_least_process()->str:
-    tf_dict = crawler.json_read("tf_dict.txt")
-    idf_dict = crawler.json_read("idf_dict.txt")
+def get_tf_idf()->dict:
+    tf_dict = {}
+    idf_dict = {}
 
     with mongodb.Mongodb() as db:
-        jie_ba_articles_len = len(db.db_all("jie_ba_Articles"))
-        db.db["record"].remove({"the標題": "tf_dict"})
-        db.db["record"].remove({"the標題": "idf_dict"})
-        db.insert_one("record", tf_dict)     # !!!!!!!!!!需更新的function
-        db.insert_one("record", idf_dict)    # !!!!!!!!!!
+        jie_ba_articles_list = db.db_all("jie_ba_Articles")
+
+    temp = []
+
+    for one_articles in jie_ba_articles_list:
+        jie_ba_word_list = one_articles["segments"]
+
+        for word in jie_ba_word_list:
+            if word in tf_dict:  # 計算出現次數 與 總辭數
+                tf_dict[word] += 1
+            else:
+                tf_dict[word] = 1
+            tf_dict["THE總共"] += 1
+            if word not in temp:  # 計算出現文章數
+                temp.append(word)
+
+        for w in temp:
+            if w in idf_dict:
+                idf_dict[w] += 1
+            else:
+                idf_dict[w] = 1
+        idf_dict["THE總共"] += 1
+        temp.clear()
 
     for i in idf_dict:
         if i != "THE總共" and i != "the標題":
@@ -56,13 +74,7 @@ def tf_idf_dict_least_process()->str:
             # tf_idf_dict[i] = math.log10(tf_dict[i] * idf_dict[i])
             tf_idf_dict[i] = math.log10(tf_dict[i]) * idf_dict[i]
 
-    tf_list = sorted(tf_dict.items(), key=operator.itemgetter(1), reverse=True)
-    idf_list = sorted(idf_dict.items(), key=operator.itemgetter(1), reverse=False)
     tf_idf_list = sorted(tf_idf_dict.items(), key=operator.itemgetter(1), reverse=True)
-
-    crawler.json_write("tf_list_to" + str(jie_ba_articles_len) + ".txt", tf_list)
-    crawler.json_write("idf_list_to" + str(jie_ba_articles_len) + ".txt", idf_list)
-    crawler.json_write("tf_idf_list_to" + str(jie_ba_articles_len) + ".txt", tf_idf_list)
 
     x = 1
     for key, value in tf_idf_list:
@@ -70,14 +82,13 @@ def tf_idf_dict_least_process()->str:
             tf_idf_dict[key] = x
             x += 1
 
-    crawler.json_write("tf_idf_dict_to" + str(jie_ba_articles_len) + ".txt", tf_idf_dict)
-
-    tf_idf_dict["the標題"] = "tf_idf_dict_to" + str(jie_ba_articles_len)
+    crawler.json_write("tf_idf_dict.txt", tf_idf_dict)
 
     with mongodb.Mongodb() as db:
+        db.db["record"].remove({"the標題": "tf_idf_dict"})
         db.insert_one("record", tf_idf_dict)
 
-    return str("tf_idf_dict_to" + str(jie_ba_articles_len) + ".txt")
+    return tf_idf_dict
 
 
 # 結疤分詞，string 為一篇文章內容
@@ -88,9 +99,6 @@ def get_jie_ba(string: str)->dict:
 
     pseg_words = pseg.cut(string)
 
-    tf_dict = crawler.json_read("tf_dict.txt")
-    idf_dict = crawler.json_read("idf_dict.txt")
-    temp = []
     word = []
     flag = []
 
@@ -101,24 +109,6 @@ def get_jie_ba(string: str)->dict:
             changed_word = one_word.word
         word.append(changed_word)
         flag.append(one_word.flag)
-        if changed_word in tf_dict:    # 計算出現次數 與 總辭數
-            tf_dict[changed_word] += 1
-        else:
-            tf_dict[changed_word] = 1
-        tf_dict["THE總共"] += 1
-        if changed_word not in temp:  # 計算出現文章數
-            temp.append(changed_word)
-
-    for w in temp:
-        if w in idf_dict:
-            idf_dict[w] += 1
-        else:
-            idf_dict[w] = 1
-
-    idf_dict["THE總共"] += 1
-
-    crawler.json_write("tf_dict.txt", tf_dict)
-    crawler.json_write("idf_dict.txt", idf_dict)
 
     ans = {"segments": word, "pos": flag}
 
@@ -135,6 +125,7 @@ def up_dict()->None:
         db.db["record"].remove({"the標題": "idf_dict"})
         db.insert_one("record", tf_dict)     # !!!!!!!!!!需更新的function
         db.insert_one("record", idf_dict)    # !!!!!!!!!!
+
 
 # Frequency_dict_least_process()
 # tf_idf_dict_least_process()
