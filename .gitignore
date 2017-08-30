@@ -2,4 +2,4 @@ __pycache__/
 .idea/
 *.pkl
 *.txt
-TEST.py
+tests.py

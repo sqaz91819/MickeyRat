@@ -78,7 +78,7 @@ class Mongodb:
 
     def delete_one(self, col_name: str, _id: str) -> None:
         result = self.db[col_name].delete_one({'_id': _id})
-        print("Deleted " + result)
+        print("Deleted " + str(result))
 
     def close(self) -> None:
         self.client.close()
@@ -86,7 +86,8 @@ class Mongodb:
     def label_view(self):
         labels = defaultdict(int)
         for article in self.search_label("articles"):
-            labels[article['label']] += 1
+            if article['label'] != article['title']:
+                labels[article['label']] += 1
         return labels
 
     def __enter__(self):
