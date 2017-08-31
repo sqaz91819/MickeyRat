@@ -7,6 +7,8 @@ def go_go_go(num: int)-> None:
 
     with mongodb.Mongodb() as db:
 
+        db.db["record"].remove({"the標題": "tf_idf_dict"})
+
         original_db_data = db.db_all("articles")
         jie_ba_db_data = db.db_all("jie_ba_Articles")
 
