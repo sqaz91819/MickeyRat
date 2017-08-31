@@ -38,9 +38,10 @@ class Mongodb:
         if not docs:
             print("Collection does not exist or no doc match.")
             return []
-        print("Query : " + query + " total : " + str(docs.count()))
+        lst = list(docs)
+        print("Query : " + query + " total : " + str(len(lst)))
         print("Spent time : " + str(time() - start)[0:5] + " secs")
-        return list(docs)
+        return lst
 
     def search_label(self, col_name: str, query: str ="雷") -> Articles:
         start = time()
@@ -48,9 +49,10 @@ class Mongodb:
         if not docs:
             print("Collection does not exist or no doc match.")
             return []
-        print("Query : " + query + " total : " + str(docs.count()))
+        lst = list(docs)
+        print("Query : " + query + " total : " + str(len(lst)))
         print("Spent time : " + str(time() - start)[0:5] + " secs")
-        return list(docs)
+        return lst
 
     def search_any(self, col_name: str, field: str, query: str) -> Articles:
         start = time()
@@ -58,9 +60,10 @@ class Mongodb:
         if not docs:
             print("Collection does not exist or no doc match.")
             return []
-        print("Query : " + query + " in " + field + " total : " + str(docs.count()))
+        lst = list(docs)
+        print("Query : " + query + " in " + field + " total : " + str(len(lst)))
         print("Spent time : " + str(time() - start)[0:5] + " secs")
-        return list(docs)
+        return lst
 
     def db_all(self, col_name: str) -> Articles:
         start = time()
@@ -68,9 +71,10 @@ class Mongodb:
         if not docs:
             print("Collection does not exist or empty.")
             return []
-        print("Total : " + str(docs.count()))
+        lst = list(docs)
+        print("Total : " + str(len(lst)))
         print("Spent time : " + str(time() - start)[0:5] + " secs")
-        return list(docs)
+        return lst
 
     def update_one(self, col_name: str, _id: str, segments, pos) -> None:
         result = self.db[col_name].update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
@@ -78,7 +82,7 @@ class Mongodb:
 
     def delete_one(self, col_name: str, _id: str) -> None:
         result = self.db[col_name].delete_one({'_id': _id})
-        print("Deleted " + result)
+        print("Deleted " + str(result))
 
     def close(self) -> None:
         self.client.close()
@@ -86,8 +90,21 @@ class Mongodb:
     def label_view(self):
         labels = defaultdict(int)
         for article in self.search_label("articles"):
-            labels[article['label']] += 1
+            if article['label'] != article['title']:
+                labels[article['label']] += 1
         return labels
+
+    # last is last article index, require is how much articles you need.
+    def num_articles(self, col_name: str, last: int, require: int):
+        start = time()
+        docs = self.db[col_name].find({}).skip(last).limit(require)
+        if not docs:
+            print("Collection does not exist or empty.")
+            return []
+        lst = list(docs)
+        print("Total : " + str(len(lst)))
+        print("Spent time : " + str(time() - start)[0:5] + " secs")
+        return lst
 
     def __enter__(self):
         return self
