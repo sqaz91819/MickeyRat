@@ -34,61 +34,65 @@ def idf_dict_first_process()->None:
 
 # 計算tf_idf
 def get_tf_idf()->dict:
-    tf_dict = {}
-    idf_dict = {}
 
     with mongodb.Mongodb() as db:
+
+        tf_idf = db.search_any("record", "the標題", "tf_idf_dict")
+        if tf_idf:
+            return tf_idf
+
+        tf_dict = {"THE總共": 0}
+        idf_dict = {"THE總共": 0}
         jie_ba_articles_list = db.db_all("jie_ba_Articles")
 
-    temp = []
+        temp = []
 
-    for one_articles in jie_ba_articles_list:
-        jie_ba_word_list = one_articles["segments"]
+        for one_articles in jie_ba_articles_list:
+            jie_ba_word_list = one_articles["segments"]
 
-        for word in jie_ba_word_list:
-            if word in tf_dict:  # 計算出現次數 與 總辭數
-                tf_dict[word] += 1
-            else:
-                tf_dict[word] = 1
-            tf_dict["THE總共"] += 1
-            if word not in temp:  # 計算出現文章數
-                temp.append(word)
+            for word in jie_ba_word_list:
+                if word in tf_dict:  # 計算出現次數 與 總辭數
+                    tf_dict[word] += 1
+                else:
+                    tf_dict[word] = 1
+                tf_dict["THE總共"] += 1
+                if word not in temp:  # 計算出現文章數
+                    temp.append(word)
 
-        for w in temp:
-            if w in idf_dict:
-                idf_dict[w] += 1
-            else:
-                idf_dict[w] = 1
-        idf_dict["THE總共"] += 1
-        temp.clear()
+            for w in temp:
+                if w in idf_dict:
+                    idf_dict[w] += 1
+                else:
+                    idf_dict[w] = 1
+            idf_dict["THE總共"] += 1
+            temp.clear()
 
-    for i in idf_dict:
-        if i != "THE總共" and i != "the標題":
-            idf_dict[i] = 1 - (idf_dict[i] / (idf_dict["THE總共"] + 1))
-            # idf_dict[i] = math.log10(idf_dict["THE總共"]+1 / idf_dict[i])
+        for i in idf_dict:
+            if i != "THE總共" and i != "the標題":
+                idf_dict[i] = 1 - (idf_dict[i] / (idf_dict["THE總共"] + 1))
+                # idf_dict[i] = math.log10(idf_dict["THE總共"]+1 / idf_dict[i])
 
-    tf_idf_dict = {}
+        tf_idf_dict = {"the標題": "tf_idf_dict"}
 
-    for i in tf_dict:
-        if i != "THE總共" and i != "the標題":
-            # tf_idf_dict[i] = math.log10(tf_dict[i] * idf_dict[i])
-            tf_idf_dict[i] = math.log10(tf_dict[i]) * idf_dict[i]
+        for i in tf_dict:
+            if i != "THE總共" and i != "the標題":
+                # tf_idf_dict[i] = math.log10(tf_dict[i] * idf_dict[i])
+                tf_idf_dict[i] = math.log10(tf_dict[i]) * idf_dict[i]
 
-    tf_idf_list = sorted(tf_idf_dict.items(), key=operator.itemgetter(1), reverse=True)
+        tf_idf_list = sorted(tf_idf_dict.items(), key=operator.itemgetter(1), reverse=True)
 
-    x = 1
-    for key, value in tf_idf_list:
-        if key != "THE總共":
-            tf_idf_dict[key] = x
-            x += 1
+        x = 1
+        for key, value in tf_idf_list:
+            if key != "THE總共":
+                tf_idf_dict[key] = x
+                x += 1
 
-    crawler.json_write("tf_idf_dict.txt", tf_idf_dict)
+        crawler.json_write("tf_idf_dict.txt", tf_idf_dict)
 
-    with mongodb.Mongodb() as db:
         db.db["record"].remove({"the標題": "tf_idf_dict"})
         db.insert_one("record", tf_idf_dict)
 
-    return tf_idf_dict
+        return tf_idf_dict
 
 
 # 結疤分詞，string 為一篇文章內容
