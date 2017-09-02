@@ -1,11 +1,15 @@
 # coding=utf-8
 from nlp import get_JIEBA
 from crawler_api import mongodb
+from inspect import currentframe, getframeinfo
+from Logger import log
 
 
 def go_go_go(num: int)-> None:
 
     with mongodb.Mongodb() as db:
+
+        db.db["record"].remove({"the標題": "tf_idf_dict"})
 
         original_db_data = db.db_all("articles")
         jie_ba_db_data = db.db_all("jie_ba_Articles")
@@ -44,11 +48,19 @@ def interface(search_key: str)->list:
                     db.insert_one("jie_ba_Articles", jie_ba_return)
                     print("{0}/{1} finished!".format(i, len(original_db_data)))
         '''
+        log(getframeinfo(currentframe()), 'fetching get_tf_idf')
         tf_idf_dict = get_JIEBA.get_tf_idf()
+        log(getframeinfo(currentframe()), 'fetching get_tf_idf finished')
 
+        log(getframeinfo(currentframe()), 'searching title in "articles":', search_key)
         articles_list = db.search_title("articles", search_key)
-        jie_ba_articles_list = db.search_title("jie_ba_Articles", search_key)
+        log(getframeinfo(currentframe()), 'searching title in "articles":', search_key, 'finished')
 
+        log(getframeinfo(currentframe()), 'searching title in "jie_ba_Articles":', search_key)
+        jie_ba_articles_list = db.search_title("jie_ba_Articles", search_key)
+        log(getframeinfo(currentframe()), 'searching title in "jie_ba_Articles":', search_key, 'finished')
+
+        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing started')
         for a in jie_ba_articles_list:
             w_num = 0
             count = 99
@@ -71,7 +83,9 @@ def interface(search_key: str)->list:
             a["url"] = articles_list[int(temp[0])]["url"]
             a["date_added"] = articles_list[int(temp[0])]["date_added"]
             a["content"] = articles_list[int(temp[0])]["content"]
+        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing finished')
 
+        log(getframeinfo(currentframe()), 'tf_idf_dict synthesising started')
         x = 1
         for article in jie_ba_articles_list:
             encode = []
@@ -80,6 +94,7 @@ def interface(search_key: str)->list:
             article["encoded"] = encode
             print("{0}/{1} encoded".format(x, len(jie_ba_articles_list)))
             x += 1
+        log(getframeinfo(currentframe()), 'tf_idf_dict synthesising finished')
 
         return jie_ba_articles_list
 

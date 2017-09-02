@@ -6,6 +6,8 @@ import jieba.posseg as pseg
 import math
 from os import path
 import operator
+from inspect import currentframe, getframeinfo
+from Logger import log
 
 
 # 產生"tf_dict.txt"
@@ -34,61 +36,86 @@ def idf_dict_first_process()->None:
 
 # 計算tf_idf
 def get_tf_idf()->dict:
-    tf_dict = {}
-    idf_dict = {}
+    frameinfo = getframeinfo(currentframe())
 
     with mongodb.Mongodb() as db:
+
+        log(getframeinfo(currentframe()), 'db.search_any("record", "the標題", "tf_idf_dict") started')
+        tf_idf = db.search_any("record", "the標題", "tf_idf_dict")
+        if tf_idf:
+            log(getframeinfo(currentframe()), 'db.search_any("record", "the標題", "tf_idf_dict") finished')
+            return tf_idf
+        log(getframeinfo(currentframe()), 'db.search_any("record", "the標題", "tf_idf_dict") failed')
+
+        tf_dict = {"THE總共": 0}
+        idf_dict = {"THE總共": 0}
+        log(getframeinfo(currentframe()), 'db.db_all("jie_ba_Articles") started')
         jie_ba_articles_list = db.db_all("jie_ba_Articles")
+        log(getframeinfo(currentframe()), 'db.db_all("jie_ba_Articles") finished')
 
-    temp = []
+        temp = []
 
-    for one_articles in jie_ba_articles_list:
-        jie_ba_word_list = one_articles["segments"]
+        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing started')
+        for one_articles in jie_ba_articles_list:
+            jie_ba_word_list = one_articles["segments"]
 
-        for word in jie_ba_word_list:
-            if word in tf_dict:  # 計算出現次數 與 總辭數
-                tf_dict[word] += 1
-            else:
-                tf_dict[word] = 1
-            tf_dict["THE總共"] += 1
-            if word not in temp:  # 計算出現文章數
-                temp.append(word)
+            for word in jie_ba_word_list:
+                if word in tf_dict:  # 計算出現次數 與 總辭數
+                    tf_dict[word] += 1
+                else:
+                    tf_dict[word] = 1
+                tf_dict["THE總共"] += 1
+                if word not in temp:  # 計算出現文章數
+                    temp.append(word)
 
-        for w in temp:
-            if w in idf_dict:
-                idf_dict[w] += 1
-            else:
-                idf_dict[w] = 1
-        idf_dict["THE總共"] += 1
-        temp.clear()
+            for w in temp:
+                if w in idf_dict:
+                    idf_dict[w] += 1
+                else:
+                    idf_dict[w] = 1
+            idf_dict["THE總共"] += 1
+            temp.clear()
+        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing finished')
 
-    for i in idf_dict:
-        if i != "THE總共" and i != "the標題":
-            idf_dict[i] = 1 - (idf_dict[i] / (idf_dict["THE總共"] + 1))
-            # idf_dict[i] = math.log10(idf_dict["THE總共"]+1 / idf_dict[i])
+        log(getframeinfo(currentframe()), 'idf_dict processing started')
+        for i in idf_dict:
+            if i != "THE總共" and i != "the標題":
+                idf_dict[i] = 1 - (idf_dict[i] / (idf_dict["THE總共"] + 1))
+                # idf_dict[i] = math.log10(idf_dict["THE總共"]+1 / idf_dict[i])
+        log(getframeinfo(currentframe()), 'idf_dict processing finished')
 
-    tf_idf_dict = {}
+        tf_idf_dict = {"the標題": "tf_idf_dict"}
 
-    for i in tf_dict:
-        if i != "THE總共" and i != "the標題":
-            # tf_idf_dict[i] = math.log10(tf_dict[i] * idf_dict[i])
-            tf_idf_dict[i] = math.log10(tf_dict[i]) * idf_dict[i]
+        log(getframeinfo(currentframe()), 'tf_dict processing started')
+        for i in tf_dict:
+            if i != "THE總共" and i != "the標題":
+                # tf_idf_dict[i] = math.log10(tf_dict[i] * idf_dict[i])
+                tf_idf_dict[i] = math.log10(tf_dict[i]) * idf_dict[i]
+        log(getframeinfo(currentframe()), 'tf_dict processing finished')
 
-    tf_idf_list = sorted(tf_idf_dict.items(), key=operator.itemgetter(1), reverse=True)
+        tf_idf_list = sorted(tf_idf_dict.items(), key=operator.itemgetter(1), reverse=True)
 
-    x = 1
-    for key, value in tf_idf_list:
-        if key != "THE總共":
-            tf_idf_dict[key] = x
-            x += 1
+        log(getframeinfo(currentframe()), 'tf_idf_list processing started')
+        x = 1
+        for key, value in tf_idf_list:
+            if key != "THE總共":
+                tf_idf_dict[key] = x
+                x += 1
+        log(getframeinfo(currentframe()), 'tf_idf_list processing finished')
 
-    crawler.json_write("tf_idf_dict.txt", tf_idf_dict)
+        log(getframeinfo(currentframe()), 'writing tf_idf_dick.txt to local disk started')
+        crawler.json_write("tf_idf_dict.txt", tf_idf_dict)
+        log(getframeinfo(currentframe()), 'writing tf_idf_dick.txt to local disk finished')
 
-    with mongodb.Mongodb() as db:
+        log(getframeinfo(currentframe()), 'cleaning db record started')
         db.db["record"].remove({"the標題": "tf_idf_dict"})
-        db.insert_one("record", tf_idf_dict)
+        log(getframeinfo(currentframe()), 'cleaning db record finished')
 
-    return tf_idf_dict
+        log(getframeinfo(currentframe()), 'insert tf_idf_dict to db started')
+        db.insert_one("record", tf_idf_dict)
+        log(getframeinfo(currentframe()), 'insert tf_idf_dict to db finished')
+
+        return tf_idf_dict
 
 
 # 結疤分詞，string 為一篇文章內容
