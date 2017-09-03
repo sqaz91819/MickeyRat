@@ -110,9 +110,9 @@ class Mongodb:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.client.close()
-        print("Database connection closed...")
         if exc_type:
             print("Error type : " + str(exc_type))
             print("Error : " + str(exc_val))
+        self.client.close()
+        print("Database connection closed...")
         return True

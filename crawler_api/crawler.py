@@ -109,7 +109,7 @@ def article_info(url: str) -> Union[Dict, None]:
     filtered = [x for x in filtered if article_id not in x]  # remove last line containing the url of the article
     content = ' '.join(filtered)
     content = re.sub(r'(\s)+', ' ', content)
-    label = re.sub('[\[\]]', ' ', title).split()[0]
+    label = re.sub('[\[\]［］【】]', ' ', title).split()[0]
 
     # data process
     date = date.split()
