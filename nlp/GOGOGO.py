@@ -58,6 +58,7 @@ def interface(search_key: str)->list:
 
             a["author"] = articles_list[int(temp[0])]["author"]
             a["label"] = articles_list[int(temp[0])]["label"]
+            a["score"] = articles_list[int(temp[0])]["score"]
             a["url"] = articles_list[int(temp[0])]["url"]
             a["date_added"] = articles_list[int(temp[0])]["date_added"]
             a["content"] = articles_list[int(temp[0])]["content"]
@@ -73,11 +74,81 @@ def interface(search_key: str)->list:
             a["encoded"] = encode
             log(getframeinfo(currentframe()), 'tf_idf_dict synthesising finished')
 
-            print("{0}/{1} encoded!!!!!!!!!!!!!".format(x, len(jie_ba_articles_list)))
+            log(getframeinfo(currentframe()), 'articles ', x, '/', len(jie_ba_articles_list), ' encoded')
             x += 1
         log(getframeinfo(currentframe()), 'jie_ba_articles_list processing finished')
 
         return jie_ba_articles_list
+
+
+def get_all_data()->list:
+
+    with mongodb.Mongodb() as db:
+
+        log(getframeinfo(currentframe()), 'get all data in "articles"')
+        articles_list = db.db_all("articles")
+        log(getframeinfo(currentframe()), 'get all data in "articles" finished')
+
+        log(getframeinfo(currentframe()), 'get all data in "jie_ba_Articles"')
+        jie_ba_articles_list = db.db_all("jie_ba_Articles")
+        log(getframeinfo(currentframe()), 'get all data in "jie_ba_Articles" finished')
+
+        x = 1
+        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing started')
+        for a in jie_ba_articles_list:
+            w_num = 0
+            count = 99
+            temp = list(range(0, len(articles_list)))
+            while len(temp) > 1:
+                w2 = a["segments"][w_num]
+                for ind in temp:
+                    if articles_list[int(ind)]["content"].find(w2) == -1:
+                        del temp[temp.index(ind)]
+                    elif articles_list[int(ind)]["content"].find(w2) > count:
+                        del temp[temp.index(ind)]
+                    elif articles_list[int(ind)]["content"].find(w2) < count:
+                        count = articles_list[int(ind)]["content"].find(w2)
+                        temp = temp[temp.index(ind):]
+                w_num += 1
+                count = 99
+
+            a["author"] = articles_list[int(temp[0])]["author"]
+            a["label"] = articles_list[int(temp[0])]["label"]
+            a["score"] = articles_list[int(temp[0])]["score"]
+            a["url"] = articles_list[int(temp[0])]["url"]
+            a["date_added"] = articles_list[int(temp[0])]["date_added"]
+            a["content"] = articles_list[int(temp[0])]["content"]
+
+            log(getframeinfo(currentframe()), 'fetching get_tf_idf')
+            tf_idf_dict = get_JIEBA.get_tf_idf(a["segments"])
+            log(getframeinfo(currentframe()), 'fetching get_tf_idf finished')
+
+            log(getframeinfo(currentframe()), 'tf_idf_dict synthesising started')
+            encode = []
+            for word in a["segments"]:
+                encode.append(tf_idf_dict[word])
+            a["encoded"] = encode
+            log(getframeinfo(currentframe()), 'tf_idf_dict synthesising finished')
+
+            log(getframeinfo(currentframe()), 'articles ', x, '/', len(jie_ba_articles_list), ' encoded')
+            x += 1
+        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing finished')
+
+        return jie_ba_articles_list
+
+
+def decode(query: list)->list:
+
+    with mongodb.Mongodb() as db:
+
+        the_dict = db.search_any("record", "the標題", "tf_idf_dict")[0]
+
+        for word, num in the_dict.items():
+            for q in list(range(0, len(query))):
+                if query[q] == num:
+                    query[q] = word
+
+        return query
 
 
 '''
