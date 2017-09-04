@@ -2,4 +2,9 @@ from datetime import datetime
 
 
 def log(frameinfo, *text) -> None:
-    print(datetime.now(), frameinfo.filename, frameinfo.lineno, *text)
+    try:
+        log.verbose
+    except NameError:
+        log.verbose = True
+    if log.verbose:
+        print(datetime.now(), frameinfo.filename, frameinfo.lineno, *text)
