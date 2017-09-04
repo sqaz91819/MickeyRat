@@ -3,6 +3,8 @@ from os import path
 from typing import List, DefaultDict
 from pymongo import MongoClient, collection
 from collections import defaultdict
+from inspect import currentframe, getframeinfo
+from Logger import log
 
 
 def read_path(filename):
@@ -26,63 +28,76 @@ class Mongodb:
 
     def insert_one(self, col_name: str, doc: Article) -> None:
         result = self.db[col_name].insert_one(doc)
-        print(result.inserted_id)
+        log(getframeinfo(currentframe()), 'DB insert result : ', result.inserted_id)
 
     def insert_many(self, col_name: str, docs: Articles) -> None:
         result = self.db[col_name].insert_many([doc for doc in docs if doc is not None])
-        print(result.inserted_ids)
+        log(getframeinfo(currentframe()), 'DB insert result : ', result.inserted_ids)
 
     def search_title(self, col_name: str, query: str) -> Articles:
         start = time()
         docs = self.db[col_name].find({'title': {'$regex': ".*" + query + ".*"}})
         if not docs:
-            print("Collection does not exist or no doc match.")
+            log(getframeinfo(currentframe()), 'Collection does not exist or no doc match.')
             return []
         lst = list(docs)
-        print("Query : " + query + " total : " + str(len(lst)))
-        print("Spent time : " + str(time() - start)[0:5] + " secs")
+        log(getframeinfo(currentframe()), 'Query : ', query, ' total : ', str(len(lst)))
+        log(getframeinfo(currentframe()), 'Spent time : ', str(time() - start)[0:5], ' secs')
         return lst
 
     def search_label(self, col_name: str, query: str ="雷") -> Articles:
         start = time()
         docs = self.db[col_name].find({'label': {'$regex': ".*" + query + ".*"}})
         if not docs:
-            print("Collection does not exist or no doc match.")
+            log(getframeinfo(currentframe()), 'Collection does not exist or no doc match.')
             return []
         lst = list(docs)
-        print("Query : " + query + " total : " + str(len(lst)))
-        print("Spent time : " + str(time() - start)[0:5] + " secs")
+        log(getframeinfo(currentframe()), 'Query : ', query, ' total : ', str(len(lst)))
+        log(getframeinfo(currentframe()), 'Spent time : ', str(time() - start)[0:5], ' secs')
         return lst
 
     def search_any(self, col_name: str, field: str, query: str) -> Articles:
         start = time()
         docs = self.db[col_name].find({field: {'$regex': ".*" + query + ".*"}})
         if not docs:
-            print("Collection does not exist or no doc match.")
+            log(getframeinfo(currentframe()), 'Collection does not exist or no doc match.')
             return []
         lst = list(docs)
-        print("Query : " + query + " in " + field + " total : " + str(len(lst)))
-        print("Spent time : " + str(time() - start)[0:5] + " secs")
+        log(getframeinfo(currentframe()), 'Query : ', query, ' in ', field, ' total : ', str(len(lst)))
+        log(getframeinfo(currentframe()), 'Spent time : ', str(time() - start)[0:5], ' secs')
         return lst
 
     def db_all(self, col_name: str) -> Articles:
         start = time()
         docs = self.db[col_name].find({})
         if not docs:
-            print("Collection does not exist or empty.")
+            log(getframeinfo(currentframe()), 'Collection does not exist or empty.')
             return []
         lst = list(docs)
-        print("Total : " + str(len(lst)))
-        print("Spent time : " + str(time() - start)[0:5] + " secs")
+        log(getframeinfo(currentframe()), 'Total : ', str(len(lst)))
+        log(getframeinfo(currentframe()), 'Spent time : ', str(time() - start)[0:5], ' secs')
         return lst
 
     def update_one(self, col_name: str, _id: str, segments, pos) -> None:
         result = self.db[col_name].update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
-        print(result.matched_count)
+        log(getframeinfo(currentframe()), 'Update result : ', result.matched_count)
+
+    def update_score(self, col_name: str, _id: str, score: int) -> None:
+        self.db[col_name].update_one({'_id': _id}, {'$set': {'score': score}})
+
+    def update_all_score(self, col_name: str, labels) -> None:
+        docs = self.db_all(col_name)
+
+        for index, doc in enumerate(docs):
+            self.update_score(col_name, doc['_id'], labels[doc['label']] if doc['label'] in labels else -1)
+            if index % 1000 == 0:
+                log(getframeinfo(currentframe()), '1000 articles updated.')
+
+        log(getframeinfo(currentframe()), 'All articles updated!')
 
     def delete_one(self, col_name: str, _id: str) -> None:
         result = self.db[col_name].delete_one({'_id': _id})
-        print("Deleted " + str(result))
+        log(getframeinfo(currentframe()), 'Deleted ', str(result))
 
     def close(self) -> None:
         self.client.close()
@@ -99,20 +114,20 @@ class Mongodb:
         start = time()
         docs = self.db[col_name].find({}).skip(last).limit(require)
         if not docs:
-            print("Collection does not exist or empty.")
+            log(getframeinfo(currentframe()), 'Collection does not exist or empty.')
             return []
         lst = list(docs)
-        print("Total : " + str(len(lst)))
-        print("Spent time : " + str(time() - start)[0:5] + " secs")
+        log(getframeinfo(currentframe()), 'Total : ', str(len(lst)))
+        log(getframeinfo(currentframe()), 'Spent time : ', str(time() - start)[0:5], ' secs')
         return lst
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.client.close()
-        print("Database connection closed...")
         if exc_type:
-            print("Error type : " + str(exc_type))
-            print("Error : " + str(exc_val))
+            log(getframeinfo(currentframe()), 'Error type : ', str(exc_type))
+            log(getframeinfo(currentframe()), 'Error : ', str(exc_val))
+        self.client.close()
+        log(getframeinfo(currentframe()), 'Database connection closed...')
         return True
