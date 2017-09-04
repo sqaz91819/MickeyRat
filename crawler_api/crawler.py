@@ -7,6 +7,9 @@ from bs4 import BeautifulSoup
 from six import u
 import json
 from typing import List, Dict, Union
+from collections import defaultdict
+from inspect import currentframe, getframeinfo
+from Logger import log
 
 abbr_to_num = {name: num for num, name in enumerate(month_abbr) if num}
 
@@ -14,7 +17,7 @@ abbr_to_num = {name: num for num, name in enumerate(month_abbr) if num}
 def __get_web_page(url):
     resp = requests.get(url, cookies={'over18': '1'}, verify=True)
     if resp.status_code != 200:
-        print('Invalid url:', resp.url)
+        log(getframeinfo(currentframe()), 'Invalid url:', resp.url)
         return None
     else:
         return resp.text
@@ -59,16 +62,16 @@ def __movie_url(start, end):
         else:
             sleep(0.1)
         start += 1
-        print("URL : {0}/{1} finished!".format(start, end))
+        log(getframeinfo(currentframe()), 'URL : {0}/{1} finished!'.format(start, end))
     return articles_url
 
 
 def article_info(url: str) -> Union[Dict, None]:
     # noinspection SpellCheckingInspection
-    print(url)
+    log(getframeinfo(currentframe()), url)
     resp = requests.get(url, cookies={'over18': '1'}, verify=True)
     if resp.status_code != 200:
-        print('invalid url:', resp.url)
+        log(getframeinfo(currentframe()), 'Invalid url:', resp.url)
         return None
 
     article_id = re.sub('\.html', '', resp.url.split('/')[-1])
@@ -109,7 +112,7 @@ def article_info(url: str) -> Union[Dict, None]:
     filtered = [x for x in filtered if article_id not in x]  # remove last line containing the url of the article
     content = ' '.join(filtered)
     content = re.sub(r'(\s)+', ' ', content)
-    label = re.sub('[\[\]]', ' ', title).split()[0]
+    label = re.sub('[\[\]［］【】]', ' ', title).split()[0]
 
     # data process
     date = date.split()
@@ -154,7 +157,7 @@ def download(start=1, end=1) -> None:
                 articles.append(article)
         except Exception:
             continue
-        print("{0}/{1} finished!".format(urls.index(url) + 1, len(urls)))
+        log(getframeinfo(currentframe()), '{0}/{1} finished!'.format(urls.index(url) + 1, len(urls)))
         sleep(0.2)
     json_write(str(start) + str(end) + ".txt", articles)
     write_log(end)
@@ -164,8 +167,8 @@ def download(start=1, end=1) -> None:
 def search(j_file, query: str) -> List[Dict]:
     target = []
     for article in j_file:
-        print(article["title"])
-        print(query)
+        log(getframeinfo(currentframe()), article["title"])
+        log(getframeinfo(currentframe()), query)
         if article["title"].find(query) != -1:
             target.append(article)
     return target
@@ -180,3 +183,11 @@ def read_log() -> str:
     with open("log.txt", "r", encoding='utf-8') as outfile:
         last = outfile.read().split()[4]
     return last
+
+
+def read_label() -> Dict:
+    labels = defaultdict(int)
+    with open("label.txt", 'r', encoding='utf-8') as table:
+        for line in table:
+            labels[line.split()[0]] = int(line.split()[1])
+    return labels
