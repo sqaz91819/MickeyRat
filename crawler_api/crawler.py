@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from six import u
 import json
 from typing import List, Dict, Union
+from collections import defaultdict
 
 abbr_to_num = {name: num for num, name in enumerate(month_abbr) if num}
 
@@ -180,3 +181,11 @@ def read_log() -> str:
     with open("log.txt", "r", encoding='utf-8') as outfile:
         last = outfile.read().split()[4]
     return last
+
+
+def read_label() -> Dict:
+    labels = defaultdict(int)
+    with open("label.txt", 'r', encoding='utf-8') as table:
+        for line in table:
+            labels[line.split()[0]] = int(line.split()[1])
+    return labels

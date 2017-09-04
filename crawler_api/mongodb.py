@@ -80,6 +80,17 @@ class Mongodb:
         result = self.db[col_name].update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
         print(result.matched_count)
 
+    def update_score(self, col_name: str, _id: str, score: int) -> None:
+        result = self.db[col_name].update_one({'_id': _id}, {'$set': {'score': score}})
+        print(result.matched_count)
+
+    def update_all_score(self, col_name: str, labels) -> None:
+        docs = self.db_all(col_name)
+
+        for doc in docs:
+            self.update_score(col_name, doc['_id'], labels[doc['label']] if doc['label'] in labels else -1)
+        print("All articles updated!")
+
     def delete_one(self, col_name: str, _id: str) -> None:
         result = self.db[col_name].delete_one({'_id': _id})
         print("Deleted " + str(result))
