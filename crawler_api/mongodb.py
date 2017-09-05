@@ -83,6 +83,10 @@ class Mongodb:
         result = self.db[col_name].update_one({'_id': _id}, {'$set': {'id': new_id}})
         print(result.matched_count)
 
+    def update_one_encode(self, col_name: str, _id: str, encode: list) -> None:
+        result = self.db[col_name].update_one({'_id': _id}, {'$set': {'encode': encode}})
+        print(result.matched_count)
+
     def update_score(self, col_name: str, _id: str, score: int) -> None:
         self.db[col_name].update_one({'_id': _id}, {'$set': {'score': score}})
 
