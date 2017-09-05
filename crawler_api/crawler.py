@@ -5,6 +5,7 @@ from datetime import datetime
 from time import sleep
 from bs4 import BeautifulSoup
 from six import u
+from os import path
 import json
 from typing import List, Dict, Union
 from collections import defaultdict
@@ -195,11 +196,11 @@ def read_label() -> Dict:
 
 
 def dump_pickle(filename: str, obj: List) -> None:
-    with open(filename + '.pickle', 'wb') as handle:
+    with open(path.join('crawler_api', 'cache_files', filename + '.pickle'), 'wb') as handle:
         dump(obj, handle, protocol=HIGHEST_PROTOCOL)
 
 
-def load_pickle(filename: str) -> List:
-    with open(filename + '.pickle', 'rb') as handle:
+def load_pickle(filename: str):
+    with open(path.join('crawler_api', 'cache_files', filename + '.pickle'), 'rb') as handle:
         obj = load(handle)
     return obj
