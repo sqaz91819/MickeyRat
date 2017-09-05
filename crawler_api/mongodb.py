@@ -79,9 +79,9 @@ class Mongodb:
         log(getframeinfo(currentframe()), 'Spent time : ', str(time() - start)[0:5], ' secs')
         return lst
 
-    def update_one(self, col_name: str, _id: str, segments, pos) -> None:
-        result = self.db[col_name].update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
-        log(getframeinfo(currentframe()), 'Update result : ', result.matched_count)
+    def update_one_id(self, col_name: str, _id: str, new_id: str) -> None:
+        result = self.db[col_name].update_one({'_id': _id}, {'$set': {'id': new_id}})
+        print(result.matched_count)
 
     def update_score(self, col_name: str, _id: str, score: int) -> None:
         self.db[col_name].update_one({'_id': _id}, {'$set': {'score': score}})
