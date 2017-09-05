@@ -24,7 +24,8 @@ class Mongodb:
                                                'server_path.txt'))
         self.client = MongoClient(self.server_path, 80)
         self.db = self.client.test
-        self.date = self.num_articles('articles', self.count_all('articles') - 1, 1)[0]['date_added']
+        self.hash = self.db_hash()
+        # self.date = self.num_articles('articles', self.count_all('articles') - 1, 1)[0]['date_added']
 
     def create_col(self, c_name: str) -> None:
         collection.Collection(self.db, c_name, create=True)
@@ -77,7 +78,8 @@ class Mongodb:
         start = time()
         try:
             pickle_all = load_pickle(col_name)
-            if pickle_all[len(pickle_all) - 1]['date_added'] == self.date:
+            pickle_hash = load_pickle('hash')
+            if pickle_hash['collections'][col_name] == self.hash['collections'][col_name]:
                 log(getframeinfo(currentframe()), 'Fetch data from pickle file : ', col_name)
                 return pickle_all
         except FileNotFoundError:
@@ -88,9 +90,13 @@ class Mongodb:
             return []
         lst = list(docs)
         dump_pickle(col_name, lst)
+        dump_pickle('hash', self.hash)
         log(getframeinfo(currentframe()), 'Total : ', str(len(lst)))
         log(getframeinfo(currentframe()), 'Spent time : ', str(time() - start)[0:5], ' secs')
         return lst
+
+    def db_hash(self) -> DefaultDict:
+        return self.db.command('dbHash')
 
     def update_one(self, col_name: str, _id: str, segments, pos) -> None:
         result = self.db[col_name].update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
