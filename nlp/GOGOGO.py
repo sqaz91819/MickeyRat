@@ -21,7 +21,6 @@ def go_go_go(num: int)-> None:
             if i < len(original_db_data):
                 jie_ba_return = get_JIEBA.get_jie_ba(original_db_data[i]["content"])
                 jie_ba_return["title"] = original_db_data[i]["title"]
-                jie_ba_return["id"] = original_db_data[i]["_id"]
                 db.insert_one("jie_ba_Articles", jie_ba_return)
                 print("{0}/{1} finished!".format(i, a))
 
@@ -42,19 +41,20 @@ def interface(search_key: str)->list:
         log(getframeinfo(currentframe()), 'jie_ba_articles_list processing started')
         for a in jie_ba_articles_list:
             w_num = 0
-            count = 0
+            count = 99
             temp = list(range(0, len(articles_list)))
-            temp2 = []
             while len(temp) > 1:
                 w2 = a["segments"][w_num]
                 for ind in temp:
-                    if articles_list[int(ind)]["content"].find(w2) == count:
-                        temp2.append(int(ind))
-                if temp2:
-                    temp = temp2
-                    temp2 = []
-                count += len(a["segments"][w_num])
+                    if articles_list[int(ind)]["content"].find(w2) == -1:
+                        del temp[temp.index(ind)]
+                    elif articles_list[int(ind)]["content"].find(w2) > count:
+                        del temp[temp.index(ind)]
+                    elif articles_list[int(ind)]["content"].find(w2) < count:
+                        count = articles_list[int(ind)]["content"].find(w2)
+                        temp = temp[temp.index(ind):]
                 w_num += 1
+                count = 99
 
             a["author"] = articles_list[int(temp[0])]["author"]
             a["label"] = articles_list[int(temp[0])]["label"]
@@ -62,11 +62,6 @@ def interface(search_key: str)->list:
             a["url"] = articles_list[int(temp[0])]["url"]
             a["date_added"] = articles_list[int(temp[0])]["date_added"]
             a["content"] = articles_list[int(temp[0])]["content"]
-            a["id"] = articles_list[int(temp[0])]["_id"]
-
-            log(getframeinfo(currentframe()), 'update id')
-            db.update_one_id("jie_ba_Articles", a["_id"], articles_list[int(temp[0])]["_id"])
-            log(getframeinfo(currentframe()), 'update id finished')
 
             log(getframeinfo(currentframe()), 'fetching get_tf_idf')
             tf_idf_dict = get_JIEBA.get_tf_idf(a["segments"])
@@ -87,63 +82,52 @@ def interface(search_key: str)->list:
 
 
 def get_all_data()->list:
-
+    raw_articles_list = []
+    jie_ba_articles_list = []
     with mongodb.Mongodb() as db:
-
         log(getframeinfo(currentframe()), 'get all data in "articles"')
-        articles_list = db.db_all("articles")
+        raw_articles_list = db.db_all("articles")
         log(getframeinfo(currentframe()), 'get all data in "articles" finished')
 
         log(getframeinfo(currentframe()), 'get all data in "jie_ba_Articles"')
         jie_ba_articles_list = db.db_all("jie_ba_Articles")
         log(getframeinfo(currentframe()), 'get all data in "jie_ba_Articles" finished')
 
-        x = 1
-        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing started')
-        for a in jie_ba_articles_list:
-            w_num = 0
-            count = 0
-            temp = list(range(0, len(articles_list)))
-            temp2 = []
-            while len(temp) > 1:
-                w2 = a["segments"][w_num]
-                for ind in temp:
-                    if articles_list[int(ind)]["content"].find(w2) == count:
-                        temp2.append(int(ind))
-                if temp2:
-                    temp = temp2
-                    temp2 = []
-                count += len(a["segments"][w_num])
-                w_num += 1
+    result_list = []
+    current_progress = 1
+    total = len(jie_ba_articles_list)
+    assert len(raw_articles_list) == total,\
+        'collection "articles"{} and collection "jie_ba_Articles"{} mismatch!'.format(len(raw_articles_list), total)
 
-            a["author"] = articles_list[int(temp[0])]["author"]
-            a["label"] = articles_list[int(temp[0])]["label"]
-            a["score"] = articles_list[int(temp[0])]["score"]
-            a["url"] = articles_list[int(temp[0])]["url"]
-            a["date_added"] = articles_list[int(temp[0])]["date_added"]
-            a["content"] = articles_list[int(temp[0])]["content"]
-            a["id"] = articles_list[int(temp[0])]["_id"]
+    log(getframeinfo(currentframe()), 'synthesising result list started')
+    for jieba_article, raw_article in zip(jie_ba_articles_list, raw_articles_list):
+        result_dict = {**jieba_article, **raw_article}
+        '''
+        jieba_article["author"] = raw_article["author"]
+        jieba_article["label"] = raw_article["label"]
+        jieba_article["score"] = raw_article["score"]
+        jieba_article["url"] = raw_article["url"]
+        jieba_article["date_added"] = raw_article["date_added"]
+        jieba_article["content"] = raw_article["content"]
+        '''
 
-            log(getframeinfo(currentframe()), 'update id')
-            db.update_one_id("jie_ba_Articles", a["_id"], articles_list[int(temp[0])]["_id"])
-            log(getframeinfo(currentframe()), 'update id finished')
+        log(getframeinfo(currentframe()), 'fetching get_tf_idf')
+        tf_idf_dict = get_JIEBA.get_tf_idf(result_dict["segments"])
+        log(getframeinfo(currentframe()), 'fetching get_tf_idf finished')
 
-            log(getframeinfo(currentframe()), 'fetching get_tf_idf')
-            tf_idf_dict = get_JIEBA.get_tf_idf(a["segments"])
-            log(getframeinfo(currentframe()), 'fetching get_tf_idf finished')
+        log(getframeinfo(currentframe()), 'encoding started')
+        encode = []
+        for word in result_dict["segments"]:
+            encode.append(tf_idf_dict[word])
+        result_dict["encoded"] = encode
+        log(getframeinfo(currentframe()), 'encoding finished')
 
-            log(getframeinfo(currentframe()), 'tf_idf_dict synthesising started')
-            encode = []
-            for word in a["segments"]:
-                encode.append(tf_idf_dict[word])
-            a["encoded"] = encode
-            log(getframeinfo(currentframe()), 'tf_idf_dict synthesising finished')
+        result_list.append(result_dict)
+        log(getframeinfo(currentframe()), 'articles ', current_progress, '/', total, ' encoded')
+        current_progress += 1
+    log(getframeinfo(currentframe()), 'synthesising result list finished')
 
-            log(getframeinfo(currentframe()), 'articles ', x, '/', len(jie_ba_articles_list), ' encoded')
-            x += 1
-        log(getframeinfo(currentframe()), 'jie_ba_articles_list processing finished')
-
-        return jie_ba_articles_list
+    return result_list
 
 
 def decode(query: list)->list:
