@@ -21,6 +21,7 @@ def go_go_go(num: int)-> None:
             if i < len(original_db_data):
                 jie_ba_return = get_JIEBA.get_jie_ba(original_db_data[i]["content"])
                 jie_ba_return["title"] = original_db_data[i]["title"]
+                jie_ba_return["id"] = original_db_data[i]["_id"]
                 db.insert_one("jie_ba_Articles", jie_ba_return)
                 print("{0}/{1} finished!".format(i, a))
 
@@ -41,20 +42,19 @@ def interface(search_key: str)->list:
         log(getframeinfo(currentframe()), 'jie_ba_articles_list processing started')
         for a in jie_ba_articles_list:
             w_num = 0
-            count = 99
+            count = 0
             temp = list(range(0, len(articles_list)))
+            temp2 = []
             while len(temp) > 1:
                 w2 = a["segments"][w_num]
                 for ind in temp:
-                    if articles_list[int(ind)]["content"].find(w2) == -1:
-                        del temp[temp.index(ind)]
-                    elif articles_list[int(ind)]["content"].find(w2) > count:
-                        del temp[temp.index(ind)]
-                    elif articles_list[int(ind)]["content"].find(w2) < count:
-                        count = articles_list[int(ind)]["content"].find(w2)
-                        temp = temp[temp.index(ind):]
+                    if articles_list[int(ind)]["content"].find(w2) == count:
+                        temp2.append(int(ind))
+                if temp2:
+                    temp = temp2
+                    temp2 = []
+                count += len(a["segments"][w_num])
                 w_num += 1
-                count = 99
 
             a["author"] = articles_list[int(temp[0])]["author"]
             a["label"] = articles_list[int(temp[0])]["label"]
@@ -62,6 +62,11 @@ def interface(search_key: str)->list:
             a["url"] = articles_list[int(temp[0])]["url"]
             a["date_added"] = articles_list[int(temp[0])]["date_added"]
             a["content"] = articles_list[int(temp[0])]["content"]
+            a["id"] = articles_list[int(temp[0])]["_id"]
+
+            log(getframeinfo(currentframe()), 'update id')
+            db.update_one_id("jie_ba_Articles", a["_id"], articles_list[int(temp[0])]["_id"])
+            log(getframeinfo(currentframe()), 'update id finished')
 
             log(getframeinfo(currentframe()), 'fetching get_tf_idf')
             tf_idf_dict = get_JIEBA.get_tf_idf(a["segments"])
@@ -97,20 +102,19 @@ def get_all_data()->list:
         log(getframeinfo(currentframe()), 'jie_ba_articles_list processing started')
         for a in jie_ba_articles_list:
             w_num = 0
-            count = 99
+            count = 0
             temp = list(range(0, len(articles_list)))
+            temp2 = []
             while len(temp) > 1:
                 w2 = a["segments"][w_num]
                 for ind in temp:
-                    if articles_list[int(ind)]["content"].find(w2) == -1:
-                        del temp[temp.index(ind)]
-                    elif articles_list[int(ind)]["content"].find(w2) > count:
-                        del temp[temp.index(ind)]
-                    elif articles_list[int(ind)]["content"].find(w2) < count:
-                        count = articles_list[int(ind)]["content"].find(w2)
-                        temp = temp[temp.index(ind):]
+                    if articles_list[int(ind)]["content"].find(w2) == count:
+                        temp2.append(int(ind))
+                if temp2:
+                    temp = temp2
+                    temp2 = []
+                count += len(a["segments"][w_num])
                 w_num += 1
-                count = 99
 
             a["author"] = articles_list[int(temp[0])]["author"]
             a["label"] = articles_list[int(temp[0])]["label"]
@@ -118,6 +122,11 @@ def get_all_data()->list:
             a["url"] = articles_list[int(temp[0])]["url"]
             a["date_added"] = articles_list[int(temp[0])]["date_added"]
             a["content"] = articles_list[int(temp[0])]["content"]
+            a["id"] = articles_list[int(temp[0])]["_id"]
+
+            log(getframeinfo(currentframe()), 'update id')
+            db.update_one_id("jie_ba_Articles", a["_id"], articles_list[int(temp[0])]["_id"])
+            log(getframeinfo(currentframe()), 'update id finished')
 
             log(getframeinfo(currentframe()), 'fetching get_tf_idf')
             tf_idf_dict = get_JIEBA.get_tf_idf(a["segments"])
