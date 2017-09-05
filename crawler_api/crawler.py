@@ -10,6 +10,7 @@ from typing import List, Dict, Union
 from collections import defaultdict
 from inspect import currentframe, getframeinfo
 from Logger import log
+from pickle import dump, load, HIGHEST_PROTOCOL
 
 abbr_to_num = {name: num for num, name in enumerate(month_abbr) if num}
 
@@ -191,3 +192,14 @@ def read_label() -> Dict:
         for line in table:
             labels[line.split()[0]] = int(line.split()[1])
     return labels
+
+
+def dump_pickle(filename: str, obj: List) -> None:
+    with open(filename + '.pickle', 'wb') as handle:
+        dump(obj, handle, protocol=HIGHEST_PROTOCOL)
+
+
+def load_pickle(filename: str) -> List:
+    with open(filename + '.pickle', 'rb') as handle:
+        obj = load(handle)
+    return obj
