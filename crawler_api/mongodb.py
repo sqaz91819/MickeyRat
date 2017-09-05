@@ -5,6 +5,7 @@ from pymongo import MongoClient, collection
 from collections import defaultdict
 from inspect import currentframe, getframeinfo
 from Logger import log
+from traceback import format_tb
 
 
 def read_path(filename):
@@ -128,6 +129,7 @@ class Mongodb:
         if exc_type:
             log(getframeinfo(currentframe()), 'Error type : ', str(exc_type))
             log(getframeinfo(currentframe()), 'Error : ', str(exc_val))
+            log(getframeinfo(currentframe()), 'Error tb : \n', ''.join(format_tb(exc_tb)))
         self.client.close()
         log(getframeinfo(currentframe()), 'Database connection closed...')
         return True
