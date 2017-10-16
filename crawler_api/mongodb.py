@@ -20,7 +20,7 @@ Articles = List[Article]
 
 class Mongodb:
     def __init__(self):
-        self.server_path = read_path(path.join('crawler_api',
+        self.server_path = read_path(path.join('D:\GitHub\MickeyRat\crawler_api',
                                                'server_path.txt'))
         self.client = MongoClient(self.server_path, 80)
         self.db = self.client.test
@@ -97,6 +97,18 @@ class Mongodb:
 
     def db_hash(self) -> DefaultDict:
         return self.db.command('dbHash')
+
+    def greater(self, col_name: str, score) -> Articles:
+        docs = self.db[col_name].find({'score': {'$gt': score}})
+        lst = list(docs)
+        if lst is None:
+            log(getframeinfo(currentframe()), 'This collection does not exist score filed')
+            raise TypeError
+        return lst
+
+    def update_one_filed(self, col_name: str, _id: str, field: str, docs) -> None:
+        result = self.db[col_name].update_one({'_id': _id}, {'$set': {field: docs}})
+        log(getframeinfo(currentframe()), 'Update result : ', result.matched_count)
 
     def update_one(self, col_name: str, _id: str, segments, pos) -> None:
         result = self.db[col_name].update_one({'_id': _id}, {'$set': {'segments': segments, 'pos': pos}})
