@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views import generic
-from .models import Question, Choice, Query
+from .models import Question, Choice, Query, ScoreMovie
 import sys
 sys.path.insert(0, 'D:\GitHub\MickeyRat')
 
@@ -23,10 +23,18 @@ class IndexView(generic.ListView):
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
         if form.is_valid():
-            with mongodb.Mongodb() as mgd:
+            with mongodb.Mongodb(hash_check=False) as mgd:
                 temp = mgd.search_title('articles', form.query['search'])
+                pos = [t['score'] for t in temp if t['score'] > 3]
+                neg = [t['score'] for t in temp if t['score'] == 3]
                 temp = [t['score'] for t in temp if t['score'] > 0]
+                neutral = len(temp) - len(pos) - len(neg)
 
+            # temp = [1, 2, 3, 4, 5, 1, 1, 4, 4, 4, 4]
+            # pos = [t for t in temp if t > 3]
+            # neg = [t for t in temp if t == 3]
+            # temp = [t for t in temp if t > 0]
+            # neutral = len(temp) - len(pos) - len(neg)
             try:
                 score = (sum(temp) / len(temp)) * 21
                 articles = len(temp)
@@ -42,6 +50,9 @@ class IndexView(generic.ListView):
                 'query': form.query['search'],
                 'movie_score': int(score),
                 'articles': articles,
+                'pos': len(pos),
+                'neg': len(neg),
+                'neutral': neutral,
             })
 
         return render(request, self.template_name, {
@@ -63,6 +74,26 @@ class ResultsView(generic.ListView):
 class LabelView(generic.ListView):
     model = Query
     template_name = 'polls/labelfix.html'
+
+
+class ModifyView(generic.ListView):
+    model = ScoreMovie
+    form_class = ScoreMovie
+    template_name = 'polls/modify.html'
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            score = form.score['score2']
+            movie = form.score['movie2']
+            with mongodb.Mongodb() as mgd:
+                article = mgd.search_dual('articles', 'title', movie, 'score', int(score))
+            try:
+                return render(request, self.template_name, article)
+            except IndexError:
+                return render(request, 'polls/labelfix.html', {'error_message': '資料庫無此電影或沒有該範圍分數的文章'})
+
+        return render(request, 'polls/labelfix.html', {'error_message': 'Not valid input.'})
 
 
 def vote(request, question_id):

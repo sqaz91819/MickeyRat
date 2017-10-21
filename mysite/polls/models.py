@@ -36,3 +36,17 @@ class Query(models.Model):
 
     def __str__(self):
         return self.query
+
+
+class ScoreMovie(models.Model):
+    score = models.IntegerField(default=1)
+    movie = models.CharField(max_length=80, primary_key=True)
+
+    def is_valid(self):
+        if self.score['score2'] and self.score['movie2']:
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        return self.movie

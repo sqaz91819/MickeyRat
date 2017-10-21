@@ -56,31 +56,6 @@
             color: #ffffff;
         }
 
-        a.topnav-icons {
-            width: 52px !important;
-            font-size: 20px !important;
-            padding-top: 11px !important;
-            padding-bottom: 13px !important;
-        }
-
-        a.topnav-icons.fa-home {
-            font-size: 22px !important
-        }
-
-        a.topnav-icons.fa-menu {
-            font-size: 22px !important
-        }
-
-        a.topnav-localicons {
-            font-size: 20px !important;
-            padding-top: 6px !important;
-            padding-bottom: 12px !important;
-        }
-
-        i.fa-caret-down, i.fa-caret-up {
-            width: 10px
-        }
-
         #sidenav h2 {
             font-size: 21px;
             padding-left: 16px;
@@ -671,10 +646,11 @@
             <br>
             <h2 style="text-align: center;"><strong>分數+電影名稱篩選</strong></h2>
             <br>
-            <form>
+            <form action="{% url 'polls:modify' %}" method="post">
+                {% csrf_token %}
                 <div class="form-group">
                     <label for="sel2">我想看1~5分的文章(選一個分數)</label>
-                        <select class="form-control" id="sel2">
+                        <select class="form-control" id="sel2" name="score2">
                             <option>1</option>
                             <option>2</option>
                             <option>3</option>
@@ -684,8 +660,8 @@
                 </div>
                 <div class="form-group">
                     <label for="mov2">我想看某部電影的文章(輸入一部電影名稱)</label>
-                        <input class="form-control" id="mov2">
-                    <button type="button" class="btn btn-info">送出</button>
+                        <input class="form-control" id="mov2" name="movie2">
+                    <button type="submit" class="btn btn-info">送出</button>
                 </div>
             </form>
         </div>

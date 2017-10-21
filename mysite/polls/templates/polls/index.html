@@ -615,7 +615,7 @@
     <link rel="stylesheet" href="{% static 'polls/style.css' %}">
     <link rel="shortcut icon" href="https://imgur.com/hHf885Z.jpg" />
 </head>
-<body style="position: relative; min-height: 100%; top: 0px; background: floralwhite">
+<body style="position: relative; min-height: 100%; top: 0px;background: ghostwhite;">
 <div>
     <div class="w3-card-2 topnav" id="topnav" style="position: relative; top: 0px;">
         <div style="overflow:auto;">
@@ -647,6 +647,35 @@
             <p style="font-size: 150%;font-weight: bold;">搜尋的電影 : {{ query }}</p>
             <p>Movie score : {{ movie_score }} / 100</p>
             <p>Total articles : {{ articles }}</p>
+        </div>
+
+        <div>
+            <div id="piechart"></div>
+
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type="text/javascript">
+            // Load google charts
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+            // Draw the chart and set the chart values
+            function drawChart() {
+                {% autoescape off %}
+                var data = google.visualization.arrayToDataTable([
+                    ['Task', 'Hours per Day'],
+                    ['Positive', {{ pos }}],
+                    ['Negative', {{ neg }}],
+                    ['Neutral', {{ neutral }}]
+                ]);
+                {% endautoescape %}
+
+              // Optional; add a title and set the width and height of the chart
+              var options = {'title':'文章原始正負比例圖', 'width':50 + '%', 'height':400};
+
+              // Display the chart inside the <div> element with id="piechart"
+              var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+              chart.draw(data, options);
+            }
+            </script>
         </div>
         {% endif %}
     </div>
